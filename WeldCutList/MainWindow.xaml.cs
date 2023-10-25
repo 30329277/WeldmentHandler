@@ -32,7 +32,7 @@ namespace WeldCutList
         /// <param name="e"></param>
         async private void Button_Click_2(object sender, RoutedEventArgs e)
         {
-            this.btn2.IsEnabled = false;
+            //this.btn2.IsEnabled = false;
             this.progressBar1.IsIndeterminate = true;
 
             await Task.Run(() =>
@@ -61,6 +61,14 @@ namespace WeldCutList
                     select new { product.Folder_Name, product.Body_Name, product.MaterialProperty };
 
                 dataGrid1.ItemsSource = query.ToList();
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    textBox1.Text =
+                    "View 的数量是: "+
+                    query.Count().ToString()
+                    ;
+                });
             }
         }
 

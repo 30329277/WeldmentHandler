@@ -4,6 +4,7 @@ using WeldCutList;
 using System.Linq;
 using System.Windows.Shapes;
 using System;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 
 
 //SOLIDWORKS API Help
@@ -224,22 +225,18 @@ namespace Macro1CSharp.csproj
                 vBodies = (object[])BodyFolder.GetBodies();
                 int i = 0;
 
-                //CutListSample01Entities1 cutListSample01Entities1 = new CutListSample01Entities1();
-
                 using (CutListSample01Entities cutListSample01Entities1 = new CutListSample01Entities())
                 {
                     if ((vBodies != null))
                     {
                         for (i = 0; i <= (vBodies.Length - 1); i++)
                         {
-                            Debug.Print("Feature name: " + thisFeat.Name);
                             Body2 Body = default(Body2);
                             Body = (Body2)vBodies[i];
+                            Debug.Print("Feature name: " + thisFeat.Name);
                             Debug.Print("          Body name: " + Body.Name);
-                            Debug.Print("          Body name: " + Body.MaterialPropertyValues);
-                            Debug.Print("          Body name: " + Body.MaterialPropertyValues2);
 
-                            CutList cutList = new CutList { Folder_Name = thisFeat.Name, Body_Name = Body.Name , MaterialProperty="1"};
+                            CutList cutList = new CutList { Folder_Name = thisFeat.Name, Body_Name = Body.Name , MaterialProperty=thisFeat.GetTypeName2()};
                             cutListSample01Entities1.CutLists.Add(cutList);
 
                             try

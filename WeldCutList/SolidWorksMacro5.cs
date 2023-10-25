@@ -62,14 +62,13 @@ namespace CenterOfMass_CSharp.csproj
             var swModelTemp01 = tempView.ReferencedDocument;
             var swPart = (PartDoc)swModelTemp01;
             var arrBody = (object[])swPart.GetBodies2((int)swBodyType_e.swSolidBody, true);
-
-            var queryArrBodyWithIndex = arrBody.Select((item, index) => new { index, Body = (Body2)item });
+            var queryArrBodyWithIndex = arrBody.Select((item, index) => new {index, Body = (Body2)item });
 
             using (CutListSample01Entities cutListSample01Entities1 = new CutListSample01Entities())
             {
                 var queryDB =
                 from product in cutListSample01Entities1.CutLists
-                select new { product.Folder_Name, product.Body_Name };
+                select new { product.Folder_Name, product.Body_Name , product.MaterialProperty};
 
                 var resultquery =
                 from c in queryArrBodyWithIndex
@@ -79,7 +78,7 @@ namespace CenterOfMass_CSharp.csproj
                 var arrayFromResultQuert=resultquery.ToArray();
 
                 Console.WriteLine(queryDB.Count()+" "+ arrBody.Count()+" "+ queryArrBodyWithIndex.Count());
-
+                
                 for (sheetCount = ss.GetLowerBound(0); sheetCount <= ss.GetUpperBound(0); sheetCount++)
                 {
                     vv = (object[])ss[sheetCount];
