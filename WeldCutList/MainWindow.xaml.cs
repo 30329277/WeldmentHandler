@@ -107,16 +107,5 @@ namespace WeldCutList
             macro.Main();
         }
 
-        /// <summary>
-        /// how to show just one body of a multibody part in a drawing view
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            var macro = new BodiesViewCSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
-            macro.Main();
-        }
-
     }
 }
