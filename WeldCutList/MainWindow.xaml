@@ -18,7 +18,6 @@
             <Button Margin="0 5" Click="Button_Click_1">Duplicate the drawing view</Button>
             <Button Margin="0 5" Click="Button_Click_4">Duplicate the drawing sheets</Button>
             <Button Margin="0 5" Click="Button_Click_5">Traverse the drawing view</Button>
-            <!--<Button Margin="0 5" Click="Button_Click">Change the drawing view</Button>-->
         </StackPanel>
 
         <DataGrid
