@@ -24,6 +24,7 @@ using System.Runtime.InteropServices;
 using System.Data.Entity.Infrastructure;
 using System.Linq;
 using WeldCutList;
+using System.Windows.Shapes;
 
 namespace CenterOfMass_CSharp.csproj
 {
@@ -62,23 +63,61 @@ namespace CenterOfMass_CSharp.csproj
             var swModelTemp01 = tempView.ReferencedDocument;
             var swPart = (PartDoc)swModelTemp01;
             var arrBody = (object[])swPart.GetBodies2((int)swBodyType_e.swSolidBody, true);
-            var queryArrBodyWithIndex = arrBody.Select((item, index) => new {index, Body = (Body2)item });
+            var queryArrBodyWithIndex = arrBody.Select((item, index) => new { index, Body = (Body2)item });
+
+            #region autoballoons的参数
+            //ModelDoc2 Part;
+            //DrawingDoc Draw;
+            //object vNotes;
+
+            AutoBalloonOptions autoballoonParams;
+
+            //bool boolstatus;
+
+           
+                //Part = (ModelDoc2)swApp.ActiveDoc;
+                //Draw = (DrawingDoc)Part;
+                //boolstatus = Draw.ActivateView("Drawing View1");
+                //boolstatus = Part.Extension.SelectByID2("Drawing View1", "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+
+                autoballoonParams = swDrawDoc.CreateAutoBalloonOptions();
+                autoballoonParams.Layout = (int)swBalloonLayoutType_e.swDetailingBalloonLayout_Square;
+                autoballoonParams.ReverseDirection = false;
+                autoballoonParams.IgnoreMultiple = true;
+                autoballoonParams.InsertMagneticLine = true;
+                autoballoonParams.LeaderAttachmentToFaces = true;
+                autoballoonParams.Style = (int)swBalloonStyle_e.swBS_Circular;
+                autoballoonParams.Size = (int)swBalloonFit_e.swBF_5Chars;
+                autoballoonParams.UpperTextContent = (int)swBalloonTextContent_e.swBalloonTextItemNumber;
+                autoballoonParams.Layername = "-None-";
+                autoballoonParams.ItemNumberStart = 1;
+                autoballoonParams.ItemNumberIncrement = 1;
+                autoballoonParams.ItemOrder = (int)swBalloonItemNumbersOrder_e.swBalloonItemNumbers_DoNotChangeItemNumbers;
+                autoballoonParams.EditBalloons = true;
+                autoballoonParams.EditBalloonOption = (int)swEditBalloonOption_e.swEditBalloonOption_Resequence;
+
+                //vNotes = swDrawDoc.AutoBalloon5(autoballoonParams);
+
+
+            
+            #region
+
 
             using (CutListSample01Entities cutListSample01Entities1 = new CutListSample01Entities())
             {
                 var queryDB =
                 from product in cutListSample01Entities1.CutLists
-                select new { product.Folder_Name, product.Body_Name , product.MaterialProperty};
+                select new { product.Folder_Name, product.Body_Name, product.MaterialProperty };
 
                 var resultquery =
                 from c in queryArrBodyWithIndex
                 join p in queryDB on c.Body.Name equals p.Body_Name
                 select new { Index = c.index, BodyName = c.Body.Name, FolderName = p.Folder_Name };
 
-                var arrayFromResultQuert=resultquery.ToArray();
+                var arrayFromResultQuert = resultquery.ToArray();
 
-                Console.WriteLine(queryDB.Count()+" "+ arrBody.Count()+" "+ queryArrBodyWithIndex.Count());
-                
+                Console.WriteLine(queryDB.Count() + " " + arrBody.Count() + " " + queryArrBodyWithIndex.Count());
+
                 for (sheetCount = ss.GetLowerBound(0); sheetCount <= ss.GetUpperBound(0); sheetCount++)
                 {
                     vv = (object[])ss[sheetCount];
@@ -89,17 +128,26 @@ namespace CenterOfMass_CSharp.csproj
                         swView = (View)vv[viewCount];
                         try
                         {
-                            Bodies[0] = arrBody[arrayFromResultQuert[sheetCount* 16 + viewCount - 1].Index];
+                            Bodies[0] = arrBody[arrayFromResultQuert[sheetCount * 16 + viewCount - 1].Index];
                         }
                         catch (Exception)
                         {
                             //Console.WriteLine(arrayFromResultQuert.Count());
                             //Console.WriteLine(((16 * (ss.GetUpperBound(0)+1))- arrayFromResultQuert.Count()).ToString());
-                            System.Windows.Forms.MessageBox.Show(((16 * (ss.GetUpperBound(0) + 1)) - arrayFromResultQuert.Count()).ToString() +"个view无效");
+                            System.Windows.Forms.MessageBox.Show(((16 * (ss.GetUpperBound(0) + 1)) - arrayFromResultQuert.Count()).ToString() + "个view无效");
                             return;
                         }
                         arrBodiesIn[0] = new DispatchWrapper(Bodies[0]);
                         swView.Bodies = (arrBodiesIn);
+
+                        #region add balloons
+                        //TODO: 增加气球功能
+                        swModel.Extension.SelectByID2(((View)vv[viewCount]).GetName2(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+                        swDrawDoc.AutoBalloon5(autoballoonParams);
+                        swModel.ClearSelection2(true);
+
+
+                        #endregion
                     }
                 }
             }

@@ -12,6 +12,7 @@
 // NOTE: Because the drawing is used elsewhere, do not
 // save changes.
 //-------------------------------------------------------------
+//这个方法暂时没用
 using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
 using System.Runtime.InteropServices;
