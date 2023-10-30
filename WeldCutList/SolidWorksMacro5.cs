@@ -134,23 +134,19 @@ namespace CenterOfMass_CSharp.csproj
                         swDrawDoc.AutoBalloon5(autoballoonParams);
                         //TODO: 视图breakalignment 和 position 功能
                         swModel.ClearSelection2(true);
+                        swView.AlignWithView(0, swView);
 
-
-                        double[] vPos = [0,0];
-
-                        //vPos = (double[])swView.Position;
-
-                        //// Move to right
-                        //vPos[0] = vPos[0] + 0.01;
-                        //swView.Position = vPos;
-
-                        //vPos = (double[])swView.Position;
-
-                        //swView.Position = 0;
-                        vPos[0] = (1.2/4)*viewCount+0;
-                        vPos[1] = viewCount*0+0.7;
+                        double[] vPos = [0, 0];
+                        vPos[0] = ((viewCount -1)% 4) * 0.3+0.2;
+                        vPos[1] = 0.8 - ((viewCount -1)/ 4) * 0.2-0.15;
+                        Console.WriteLine($"第{viewCount}个视图的坐标:x={vPos[0]};y={vPos[1]}");
                         swView.Position = vPos;
 
+                        Console.WriteLine(swView.GetLineCount2(0));
+                        Console.WriteLine(swView.GetLineCount2(1));
+                        Console.WriteLine(swView.GetLineCount2(2));
+                        Console.WriteLine(swView.GetLineCount2(3));
+                        Console.WriteLine(swView.GetLineCount2(4));
 
                         #endregion
 
