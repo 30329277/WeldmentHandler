@@ -29,12 +29,13 @@ using System.Windows.Forms.VisualStyles;
 
 namespace CenterOfMass_CSharp.csproj
 {
-    partial class SolidWorksMacro
+    public partial class SolidWorksMacro
     {
 
         ModelDoc2 swModel;
         DrawingDoc swDrawDoc;
         View swView;
+        public string swViewName;
         CenterOfMass swCenterOfMass;
         Annotation swAnnotation;
         int sheetCount;
@@ -46,6 +47,7 @@ namespace CenterOfMass_CSharp.csproj
         DrawingDoc swDraw;
         DocumentSpecification swDocSpecification;
         Sheet swSheet;
+        public string swSheetName;
         DrawingComponent swDrawingComponent;
         Component2 swComponent;
         Entity swEntity;
@@ -154,12 +156,12 @@ namespace CenterOfMass_CSharp.csproj
 
         public void AlignViewWithTheLongestEdge(ModelDoc2 swModel, string viewName)
         {
-
             swModel = (ModelDoc2)swApp.ActiveDoc;
             swDraw = (DrawingDoc)swModel;
 
             // Get the current sheet
             swSheet = (Sheet)swDraw.GetCurrentSheet();
+            swSheetName = (string)swSheet.GetName();
             Debug.Print(swSheet.GetName());
 
             // Select Drawing View1
@@ -167,6 +169,7 @@ namespace CenterOfMass_CSharp.csproj
             swView = (View)((SelectionMgr)swModel.SelectionManager).GetSelectedObject6(1, -1);
 
             // Print the drawing view name and get the component in the drawing view
+            swViewName= (string)swView.Name;
             Debug.Print(swView.GetName2());
             swDrawingComponent = swView.RootDrawingComponent;
             swComponent = swDrawingComponent.Component;
@@ -224,7 +227,7 @@ namespace CenterOfMass_CSharp.csproj
             swModel.ClearSelection2(true);
 
             // Show all hidden edges
-            swView.HiddenEdges = vEdges;
+            //swView.HiddenEdges = vEdges;
 
         }
 

@@ -7,6 +7,9 @@
         mc:Ignorable="d"
         Title="WeldmentCutList" Height="600" Width="600
         ">
+    <!--<Window.DataContext>
+        <local:
+    </Window.DataContext>-->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
@@ -36,6 +39,9 @@
             IsReadOnly="True"
             CanUserSortColumns="False"
             FontSize="13" />
-        <TextBox Grid.Row="2" Name="textBox1"  Text="view数量"  VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="15"/>
+        <StackPanel Grid.Row="2" Orientation="Vertical">
+            <TextBox Name="textBox1"  Text="view数量"  VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="15"/>
+            <TextBox Name="textBox2"  Text="{Binding swViewName}"  VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="15"/>
+        </StackPanel>
     </Grid>
 </Window>
