@@ -115,5 +115,10 @@ namespace WeldCutList
             macro.Main();
         }
 
+        private void Button_Click_6(object sender, RoutedEventArgs e)
+        {
+            var macro = new HideShowEdges_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
+            macro.Main();
+        }
     }
 }
