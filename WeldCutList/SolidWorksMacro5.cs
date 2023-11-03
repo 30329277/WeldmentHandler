@@ -164,6 +164,12 @@ namespace CenterOfMass_CSharp.csproj
 
             // Get the current sheet
             swSheet = (Sheet)swDraw.GetCurrentSheet();
+            //activate the current sheet 
+            //swModel.SetPickMode();
+            //var boolActivated= swDraw.ActivateSheet(swSheet.GetName());
+            //swDraw.GetCurrentSheet();
+            //Console.WriteLine(boolActivated);
+
             swSheetName = (string)swSheet.GetName();
             Debug.Print(swSheet.GetName());
 
