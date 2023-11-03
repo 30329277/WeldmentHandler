@@ -136,6 +136,7 @@ namespace CenterOfMass_CSharp.csproj
                         //TODO: 视图breakalignment 和 position 功能
                         swModel.ClearSelection2(true);
 
+                        //已经把 break alignment 提前到了前边, 所以这一行注释掉
                         //swView.AlignWithView(0, swView);
 
                         //根据长边调整一下方向
@@ -146,6 +147,8 @@ namespace CenterOfMass_CSharp.csproj
                         vPos[1] = 0.8 - ((viewCount - 1) / 4) * 0.2 - 0.15;
                         Console.WriteLine($"第{viewCount}个视图的坐标:x={vPos[0]};y={vPos[1]}");
                         swView.Position = vPos;
+
+                        swModel.EditRebuild3();
                         //AlignViewWithTheLongestEdge(swModel, swView.Name);
                         #endregion
 
@@ -221,7 +224,8 @@ namespace CenterOfMass_CSharp.csproj
 
             swDraw.AlignHorz();
 
-            swModel.ForceRebuild3(true);
+            //swModel.ForceRebuild3(true);
+            swModel.EditRebuild3();
 
             // Clear all selections
             swModel.ClearSelection2(true);
