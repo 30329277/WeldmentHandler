@@ -80,23 +80,6 @@ namespace CenterOfMass_CSharp.csproj
 
             AutoBalloonOptions autoballoonParams;
             autoballoonParams = swDrawDoc.CreateAutoBalloonOptions();
-            //这里的内容注释掉反而效果是正常的
-            //autoballoonParams.Layout = (int)swBalloonLayoutType_e.swDetailingBalloonLayout_Square;
-            //autoballoonParams.ReverseDirection = false;
-            //autoballoonParams.IgnoreMultiple = true;
-            //autoballoonParams.InsertMagneticLine = true;
-            //autoballoonParams.LeaderAttachmentToFaces = true;
-            //autoballoonParams.Style = (int)swBalloonStyle_e.swBS_Circular;
-            //autoballoonParams.Size = (int)swBalloonFit_e.swBF_5Chars;
-            //autoballoonParams.UpperTextContent = (int)swBalloonTextContent_e.swBalloonTextItemNumber;
-            //autoballoonParams.Layername = "-None-";
-            //autoballoonParams.ItemNumberStart = 1;
-            //autoballoonParams.ItemNumberIncrement = 1;
-            //autoballoonParams.ItemOrder = (int)swBalloonItemNumbersOrder_e.swBalloonItemNumbers_DoNotChangeItemNumbers;
-            //autoballoonParams.EditBalloons = true;
-            //autoballoonParams.EditBalloonOption = (int)swEditBalloonOption_e.swEditBalloonOption_Resequence;
-
-            //vNotes = swDrawDoc.AutoBalloon5(autoballoonParams);
 
             #endregion
 
@@ -137,8 +120,6 @@ namespace CenterOfMass_CSharp.csproj
                         }
                         catch (Exception)
                         {
-                            //Console.WriteLine(arrayFromResultQuert.Count());
-                            //Console.WriteLine(((16 * (ss.GetUpperBound(0)+1))- arrayFromResultQuert.Count()).ToString());
                             System.Windows.Forms.MessageBox.Show(((16 * (ss.GetUpperBound(0) + 1)) - arrayFromResultQuert.Count()).ToString() + "个view无效");
                             return;
                         }
@@ -170,7 +151,6 @@ namespace CenterOfMass_CSharp.csproj
                 }
             }
         }
-
 
         public void AlignViewWithTheLongestEdge(ModelDoc2 swModel, string viewName)
         {
@@ -239,8 +219,6 @@ namespace CenterOfMass_CSharp.csproj
             swDraw.AlignHorz();
 
             swModel.ForceRebuild3(true);
-
-            //swModel.Rebuild(8);
 
             // Clear all selections
             swModel.ClearSelection2(true);

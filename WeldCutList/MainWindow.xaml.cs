@@ -109,16 +109,20 @@ namespace WeldCutList
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Button_Click_5(object sender, RoutedEventArgs e)
+        async private void Button_Click_5(object sender, RoutedEventArgs e)
         {
-            var macro = new CenterOfMass_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
-            macro.Main();
+            //this.btn2.IsEnabled = false;
+            this.progressBar2.IsIndeterminate = true;
+
+            await Task.Run(() =>
+            {
+                var macro = new CenterOfMass_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
+                macro.Main();
+            });
+
+            this.progressBar2.IsIndeterminate = false;
+            this.progressBar2.Value = 100;
         }
 
-        private void Button_Click_6(object sender, RoutedEventArgs e)
-        {
-            var macro = new HideShowEdges_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
-            macro.Main();
-        }
     }
 }
