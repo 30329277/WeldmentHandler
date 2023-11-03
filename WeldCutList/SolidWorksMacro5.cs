@@ -122,6 +122,13 @@ namespace CenterOfMass_CSharp.csproj
 
                     for (viewCount = 1; viewCount <= vv.GetUpperBound(0); viewCount++)
                     {
+                        swView = (View)vv[viewCount];
+
+                        swView.AlignWithView(0, swView);
+                    }
+
+                    for (viewCount = 1; viewCount <= vv.GetUpperBound(0); viewCount++)
+                    {
                         Debug.Print(((View)vv[viewCount]).GetName2());
                         swView = (View)vv[viewCount];
                         try
@@ -145,22 +152,18 @@ namespace CenterOfMass_CSharp.csproj
                         swDrawDoc.AutoBalloon5(autoballoonParams);
                         //TODO: 视图breakalignment 和 position 功能
                         swModel.ClearSelection2(true);
-                        swView.AlignWithView(0, swView);
+
+                        //swView.AlignWithView(0, swView);
+
+                        //根据长边调整一下方向
+                        AlignViewWithTheLongestEdge(swModel, swView.Name);
 
                         double[] vPos = [0, 0];
-                        vPos[0] = ((viewCount -1)% 4) * 0.3+0.2;
-                        vPos[1] = 0.8 - ((viewCount -1)/ 4) * 0.2-0.15;
+                        vPos[0] = ((viewCount - 1) % 4) * 0.3 + 0.2;
+                        vPos[1] = 0.8 - ((viewCount - 1) / 4) * 0.2 - 0.15;
                         Console.WriteLine($"第{viewCount}个视图的坐标:x={vPos[0]};y={vPos[1]}");
                         swView.Position = vPos;
-
-                        AlignView(swModel, swView.Name);
-
-                        Console.WriteLine(swView.GetLineCount2(0));
-                        Console.WriteLine(swView.GetLineCount2(1));
-                        Console.WriteLine(swView.GetLineCount2(2));
-                        Console.WriteLine(swView.GetLineCount2(3));
-                        Console.WriteLine(swView.GetLineCount2(4));
-
+                        //AlignViewWithTheLongestEdge(swModel, swView.Name);
                         #endregion
 
                     }
@@ -169,7 +172,7 @@ namespace CenterOfMass_CSharp.csproj
         }
 
 
-        public void AlignView(ModelDoc2 swModel, string viewName)
+        public void AlignViewWithTheLongestEdge(ModelDoc2 swModel, string viewName)
         {
 
             swModel = (ModelDoc2)swApp.ActiveDoc;
