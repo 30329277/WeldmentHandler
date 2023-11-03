@@ -1,0 +1,11 @@
+
+**** Trace file opened at 2023-11-03 13:14:16.636590 UTC+08:00 (China Standard Time)
+NW RFC Library: SDK variant, Release 750 Patch Level 3, Compiled on Feb  1 2019 20:32:23
+ CPIC library: 753.2018.11.12 version 3, NI library: 40, Kernel Release: 753 Patch Level 324
+ Current working directory: C:\local\IE4.0\C# project\WeldmentCutList v03\3D model for test only, Program: SLDWORKS
+ Hardware: PC with Windows NT 16x AMD64 Level 6 (Mod 141 Step 1), Operating_system: Windows NT 10.0
+ Hostname: 118LT00914, IP address: 172.18.242.24, IPv6 address: ::1
+
+2023-11-03 13:14:16.636749 [54336] >> Error entry
+	[Handle: 466238896	ConvID: 96141155	SysID: SP1	SysNr: 00	Target: z01sp587.go.sidel.com	User: 107895	Mandant: 100	Language: E	Codepage: 4103]
+	RfcABAPException: Key: FU_NOT_FOUND, Code: RFC_ABAP_EXCEPTION, Message: ID:FL Type:E Number:046 /XPLM/CDS_LOAD_INSTANCES

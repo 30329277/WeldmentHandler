@@ -25,6 +25,7 @@ using System.Data.Entity.Infrastructure;
 using System.Linq;
 using WeldCutList;
 using System.Windows.Shapes;
+using System.Windows.Forms.VisualStyles;
 
 namespace CenterOfMass_CSharp.csproj
 {
@@ -41,6 +42,16 @@ namespace CenterOfMass_CSharp.csproj
         object[] ss;
         object[] vv;
         double[] coord;
+        //<<<<<<<<<<<<<<
+        DrawingDoc swDraw;
+        DocumentSpecification swDocSpecification;
+        Sheet swSheet;
+        DrawingComponent swDrawingComponent;
+        Component2 swComponent;
+        Entity swEntity;
+        object[] vEdges;
+        bool bRet;
+        int i;
 
         object[] Bodies = new object[1];
         DispatchWrapper[] arrBodiesIn = new DispatchWrapper[1];
@@ -142,6 +153,8 @@ namespace CenterOfMass_CSharp.csproj
                         Console.WriteLine($"第{viewCount}个视图的坐标:x={vPos[0]};y={vPos[1]}");
                         swView.Position = vPos;
 
+                        AlignView(swModel, swView.Name);
+
                         Console.WriteLine(swView.GetLineCount2(0));
                         Console.WriteLine(swView.GetLineCount2(1));
                         Console.WriteLine(swView.GetLineCount2(2));
@@ -153,6 +166,85 @@ namespace CenterOfMass_CSharp.csproj
                     }
                 }
             }
+        }
+
+
+        public void AlignView(ModelDoc2 swModel, string viewName)
+        {
+
+            swModel = (ModelDoc2)swApp.ActiveDoc;
+            swDraw = (DrawingDoc)swModel;
+
+            // Get the current sheet
+            swSheet = (Sheet)swDraw.GetCurrentSheet();
+            Debug.Print(swSheet.GetName());
+
+            // Select Drawing View1
+            bRet = swModel.Extension.SelectByID2(viewName, "DRAWINGVIEW", 0.0, 0.0, 0.0, true, 0, null, (int)swSelectOption_e.swSelectOptionDefault);
+            swView = (View)((SelectionMgr)swModel.SelectionManager).GetSelectedObject6(1, -1);
+
+            // Print the drawing view name and get the component in the drawing view
+            Debug.Print(swView.GetName2());
+            swDrawingComponent = swView.RootDrawingComponent;
+            swComponent = swDrawingComponent.Component;
+
+            // Get the component's visible entities in the drawing view
+            int eCount = 0;
+            eCount = swView.GetVisibleEntityCount2(swComponent, (int)swViewEntityType_e.swViewEntityType_Edge);
+            vEdges = (object[])swView.GetVisibleEntities2(swComponent, (int)swViewEntityType_e.swViewEntityType_Edge);
+            Debug.Print("Number of edges found: " + eCount);
+
+            Dictionary<int, double> e = new Dictionary<int, double>();
+
+
+            // Hide all of the visible edges in the drawing view
+            for (i = 0; i <= eCount - 1; i++)
+            {
+                swEntity = (Entity)vEdges[i];
+                swEntity.Select4(true, null);
+                //swDraw.HideEdge();
+
+                ModelDocExtension swModelDocExt = swModel.Extension;
+                Measure swMeasure = swModelDocExt.CreateMeasure();
+
+                SelectionMgr swSelMgr = swModel.ISelectionManager;
+
+                swMeasure.ArcOption = 0;
+
+                var status = swMeasure.Calculate(null);
+                if ((status))
+                {
+                    if ((!(swMeasure.Length == -1)))
+                    {
+                        Debug.Print("Length: " + swMeasure.Length);
+                        e.Add(i, swMeasure.Length);
+                    }
+                }
+                else
+                {
+                    Debug.Print("Invalid combination of selected entities.");
+                }
+
+                swModel.ClearSelection2(true);
+            }
+
+            Console.WriteLine(e.Count);
+            var maxKey = e.OrderByDescending(x => x.Value).First().Key;
+            swEntity = (Entity)vEdges[maxKey];
+            swEntity.Select4(true, null);
+
+            swDraw.AlignHorz();
+
+            swModel.ForceRebuild3(true);
+
+            //swModel.Rebuild(8);
+
+            // Clear all selections
+            swModel.ClearSelection2(true);
+
+            // Show all hidden edges
+            swView.HiddenEdges = vEdges;
+
         }
 
         public SldWorks swApp;
