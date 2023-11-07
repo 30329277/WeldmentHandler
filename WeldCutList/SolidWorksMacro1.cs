@@ -19,6 +19,9 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 // ---------------------------------------------------------------------------
 namespace InsertUnfoldedView_CSharp.csproj
 {
+    /// <summary>
+    /// 用于复制多个视图
+    /// </summary>
     partial class SolidWorksMacro
     {
 
@@ -64,15 +67,17 @@ namespace InsertUnfoldedView_CSharp.csproj
                 System.Windows.Forms.MessageBox.Show("当前工程图需要至少存在一个view!");
                 return;
             }
-            double xSpace = 0.27;
-            double ySpace = 0.15;
+            //double xSpace = 0.27/2;
+            double xSpace = 0.19;
+            //double ySpace = 0.15/2;
+            double ySpace = 0.13;
             ArrayList verticalViewNames = new ArrayList();
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 5; i++)
             {
                 Part.Extension.SelectByID2(arrayList[3].ToString(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
                 swDraw.CreateUnfoldedViewAt3((double)arrayList[4] + 0.025 + xSpace * (i + 1), (double)arrayList[5], 0, false);
             }
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 5; i++)
             {
                 Part.Extension.SelectByID2(arrayList[3].ToString(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
                 string tempVerticalName = swDraw.CreateUnfoldedViewAt3((double)arrayList[4], (double)arrayList[5] - 0.025 - ySpace * (i + 1), 0, false).Name;
@@ -83,7 +88,7 @@ namespace InsertUnfoldedView_CSharp.csproj
                 object item = verticalViewNames[i];
                 if (item != null)
                 {
-                    for (int j = 0; j < 3; j++)
+                    for (int j = 0; j < 5; j++)
                     {
                         Part.Extension.SelectByID2(item.ToString(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
                         swDraw.CreateUnfoldedViewAt3((double)arrayList[4] + 0.025 + xSpace * (j + 1), (double)arrayList[5] - 0.025 - ySpace * (i + 1), 0, false);
