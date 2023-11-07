@@ -72,7 +72,7 @@ namespace InsertUnfoldedView_CSharp.csproj
             //double ySpace = 0.15/2;
             double ySpace = 0.13;
             ArrayList verticalViewNames = new ArrayList();
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 4; i++)
             {
                 Part.Extension.SelectByID2(arrayList[3].ToString(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
                 swDraw.CreateUnfoldedViewAt3((double)arrayList[4] + 0.025 + xSpace * (i + 1), (double)arrayList[5], 0, false);
@@ -88,7 +88,7 @@ namespace InsertUnfoldedView_CSharp.csproj
                 object item = verticalViewNames[i];
                 if (item != null)
                 {
-                    for (int j = 0; j < 5; j++)
+                    for (int j = 0; j < 4; j++)
                     {
                         Part.Extension.SelectByID2(item.ToString(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
                         swDraw.CreateUnfoldedViewAt3((double)arrayList[4] + 0.025 + xSpace * (j + 1), (double)arrayList[5] - 0.025 - ySpace * (i + 1), 0, false);

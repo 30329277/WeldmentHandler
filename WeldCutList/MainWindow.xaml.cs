@@ -73,7 +73,7 @@ namespace WeldCutList
         }
 
         /// <summary>
-        /// duplicate views from an existing view, 当前是16个
+        /// duplicate views from an existing view, 当前是16个, 改成了32个
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
