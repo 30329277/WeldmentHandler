@@ -18,8 +18,7 @@
         </Grid.RowDefinitions>
         <StackPanel  VerticalAlignment="Top">
             <!--第一个按钮-->
-            <!--<Button Name="btn2" Margin="0 5" Click="Button_Click_2">Get solid bodies from cut-list folders</Button>-->
-            <Button Name="btn2" Margin="0 5" >Get solid bodies from cut-list folders</Button>
+            <Button Name="btn2" Margin="0 5" Click="Button_Click_2">Get solid bodies from cut-list folders</Button>
             <!--进度条-->
             <ProgressBar Height="20" Minimum="0" Maximum="100" x:Name="progressBar1" />
             <Button Margin="0 5" Click="Button_Click_3">Check the DB</Button>

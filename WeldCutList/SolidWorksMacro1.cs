@@ -24,7 +24,6 @@ namespace InsertUnfoldedView_CSharp.csproj
     /// </summary>
     partial class SolidWorksMacro
     {
-
         public void Main()
         {
             DrawingDoc swDraw = default(DrawingDoc);

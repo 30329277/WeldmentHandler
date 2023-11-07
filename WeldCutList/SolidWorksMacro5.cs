@@ -26,6 +26,7 @@ using System.Linq;
 using WeldCutList;
 using System.Windows.Shapes;
 using System.Windows.Forms.VisualStyles;
+using System.Windows;
 
 namespace CenterOfMass_CSharp.csproj
 {
@@ -118,11 +119,11 @@ namespace CenterOfMass_CSharp.csproj
                         swView = (View)vv[viewCount];
                         try
                         {
-                            Bodies[0] = arrBody[arrayFromResultQuert[sheetCount * 16 + viewCount - 1].Index];
+                            Bodies[0] = arrBody[arrayFromResultQuert[sheetCount * 30 + viewCount - 1].Index];
                         }
                         catch (Exception)
                         {
-                            System.Windows.Forms.MessageBox.Show(((16 * (ss.GetUpperBound(0) + 1)) - arrayFromResultQuert.Count()).ToString() + "个view无效");
+                            System.Windows.Forms.MessageBox.Show(((30 * (ss.GetUpperBound(0) + 1)) - arrayFromResultQuert.Count()).ToString() + "个view无效");
                             return;
                         }
                         arrBodiesIn[0] = new DispatchWrapper(Bodies[0]);
@@ -142,9 +143,13 @@ namespace CenterOfMass_CSharp.csproj
                         //根据长边调整一下方向
                         AlignViewWithTheLongestEdge(swModel, swView.Name);
 
-                        double[] vPos = [0, 0];
-                        vPos[0] = ((viewCount - 1) % 4) * 0.3 + 0.2;
-                        vPos[1] = 0.8 - ((viewCount - 1) / 4) * 0.2 - 0.15;
+                        swModel.EditRebuild3();
+                        swModel.ForceRebuild3(true);
+
+                        //193 136
+                        double[] vPos = { 0, 0 };
+                        vPos[0] = ((viewCount - 1) % 5) * 0.193 + 0.096;
+                        vPos[1] = 0.82 - ((viewCount - 1) / 5) * 0.136 - 0.068;
                         Console.WriteLine($"第{viewCount}个视图的坐标:x={vPos[0]};y={vPos[1]}");
                         swView.Position = vPos;
 
@@ -172,13 +177,14 @@ namespace CenterOfMass_CSharp.csproj
 
             swSheetName = (string)swSheet.GetName();
             Debug.Print(swSheet.GetName());
+            //Application.Current.Dispatcher.Invoke(new Action(() => {}));
 
             // Select Drawing View1
             bRet = swModel.Extension.SelectByID2(viewName, "DRAWINGVIEW", 0.0, 0.0, 0.0, true, 0, null, (int)swSelectOption_e.swSelectOptionDefault);
             swView = (View)((SelectionMgr)swModel.SelectionManager).GetSelectedObject6(1, -1);
 
             // Print the drawing view name and get the component in the drawing view
-            swViewName= (string)swView.Name;
+            swViewName = (string)swView.Name;
             Debug.Print(swView.GetName2());
             swDrawingComponent = swView.RootDrawingComponent;
             swComponent = swDrawingComponent.Component;
@@ -211,7 +217,7 @@ namespace CenterOfMass_CSharp.csproj
                 {
                     if ((!(swMeasure.Length == -1)))
                     {
-                        Debug.Print("Length: " + swMeasure.Length);
+                        //Debug.Print("Length: " + swMeasure.Length);
                         e.Add(i, swMeasure.Length);
                     }
                 }

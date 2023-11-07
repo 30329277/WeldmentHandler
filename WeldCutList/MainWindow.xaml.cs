@@ -75,7 +75,7 @@ namespace WeldCutList
         }
 
         /// <summary>
-        /// duplicate views from an existing view, 当前是16个, 改成了32个
+        /// duplicate views from an existing view, 当前是16个, 改成了30个
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -86,7 +86,7 @@ namespace WeldCutList
         }
 
         /// <summary>
-        /// copy and paste drawing sheets. 当前是4个
+        /// copy and paste drawing sheets. 改成 view/30
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -100,9 +100,9 @@ namespace WeldCutList
                         //orderby product.ListPrice
                     select new { product.Folder_Name, product.Body_Name };
                 var macro = new CopyAndPasteCsharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
-                var sheetQuantity = Math.Ceiling(Convert.ToDouble(query.Count()) / 16);
-                Console.WriteLine(query.Count() + "   " + Convert.ToDouble(query.Count()) / 16 + "  " + sheetQuantity);
-                macro.Main(query.Count() / 16);
+                var sheetQuantity = Math.Ceiling(Convert.ToDouble(query.Count()) / 30);
+                Console.WriteLine(query.Count() + "   " + Convert.ToDouble(query.Count()) / 30 + "  " + sheetQuantity);
+                macro.Main(query.Count() / 30);
             }
         }
 
