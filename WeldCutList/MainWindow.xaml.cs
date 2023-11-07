@@ -23,6 +23,8 @@ namespace WeldCutList
         public MainWindow()
         {
             InitializeComponent();
+            //btn2.Click += Button_Click_2;
+            //btn2.Click += Button_Click_3;
         }
 
         /// <summary>
