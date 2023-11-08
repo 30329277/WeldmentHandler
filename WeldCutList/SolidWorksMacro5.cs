@@ -118,10 +118,18 @@ namespace CenterOfMass_CSharp.csproj
                     {
                         //Debug.Print(((View)vv[viewCount]).GetName2());
                         swView = (View)vv[viewCount];
-                        swSheetName= swView.Sheet.GetName();
+                        swSheetName = swView.Sheet.GetName();
                         SwViewName = (string)swView.Name;
                         Debug.Print(swSheetName);
                         Debug.Print(SwViewName);
+
+                        //试试outline在view 重置 body 以后是否发生了变化
+                        double[] outline = (double[])swView.GetOutline();
+                        double[] pos = (double[])swView.Position;
+                        Debug.Print("  X and Y positions = (" + pos[0] * 1000.0 + ", " + pos[1] * 1000.0 + ") mm");
+                        Debug.Print("  X and Y bounding box minimums = (" + outline[0] * 1000.0 + ", " + outline[1] * 1000.0 + ") mm");
+                        Debug.Print("  X and Y bounding box maximums = (" + outline[2] * 1000.0 + ", " + outline[3] * 1000.0 + ") mm");
+                        Debug.Print("  bounding box size = (" + (outline[2] - outline[0]) * 1000.0 + ", " + (outline[3] - outline[1]) * 1000.0 + ") mm");
 
                         try
                         {
@@ -135,12 +143,12 @@ namespace CenterOfMass_CSharp.csproj
                         arrBodiesIn[0] = new DispatchWrapper(Bodies[0]);
                         swView.Bodies = (arrBodiesIn);
 
-                        #region add balloons
+                        #region 添加气球 并重置位置
 
-                        //TODO: 增加气球功能
+                        //增加气球功能
                         swModel.Extension.SelectByID2(((View)vv[viewCount]).GetName2(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
                         swDrawDoc.AutoBalloon5(autoballoonParams);
-                        //TODO: 视图breakalignment 和 position 功能
+                        //视图breakalignment 和 position 功能
                         swModel.ClearSelection2(true);
 
                         //已经把 break alignment 提前到了前边, 所以这一行注释掉
@@ -156,10 +164,25 @@ namespace CenterOfMass_CSharp.csproj
                         double[] vPos = { 0, 0 };
                         vPos[0] = ((viewCount - 1) % 5) * 0.193 + 0.096;
                         vPos[1] = 0.82 - ((viewCount - 1) / 5) * 0.136 - 0.068;
-                        Console.WriteLine($"第{viewCount}个视图的坐标:x={vPos[0]};y={vPos[1]}");
                         swView.Position = vPos;
+                        Console.WriteLine($"第{viewCount}个视图的坐标:x={vPos[0]};y={vPos[1]}");
+
+                        //试试outline在view 重置 body 以后是否发生了变化
+                        var outline2 = (double[])swView.GetOutline();
+                        var pos2 = (double[])swView.Position;
+                        Debug.Print("  X and Y positions = (" + pos2[0] * 1000.0 + ", " + pos2[1] * 1000.0 + ") mm");
+                        Debug.Print("  X and Y bounding box minimums = (" + outline2[0] * 1000.0 + ", " + outline2[1] * 1000.0 + ") mm");
+                        Debug.Print("  X and Y bounding box maximums = (" + outline2[2] * 1000.0 + ", " + outline2[3] * 1000.0 + ") mm");
+                        Debug.Print("  bounding box size = (" + (outline2[2] - outline2[0]) * 1000.0 + ", " + (outline2[3] - outline2[1]) * 1000.0 + ") mm");
 
                         swModel.EditRebuild3();
+
+                        //vPos[0] -= (outline2[2] - outline[2]);
+                        //vPos[1] -= (outline2[2] - outline[2]);
+                        //vPos[0] = outline2[2]-((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
+                        //vPos[1] = outline2[3]-((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
+                        //swView.Position = vPos;
+
                         //AlignViewWithTheLongestEdge(swModel, swView.Name);
                         #endregion
 
@@ -168,9 +191,6 @@ namespace CenterOfMass_CSharp.csproj
                     }
                 }
             }
-
-
-
         }
 
         public void AlignViewWithTheLongestEdge(ModelDoc2 swModel, string viewName)

@@ -46,7 +46,7 @@ namespace CopyAndPasteCsharp.csproj
             Sheet currentsheet = default(Sheet);
             currentsheet = (Sheet)Part.GetCurrentSheet();
             Part.ActivateSheet(currentsheet.GetName());
-            Debug.Print("Active sheet: " + currentsheet.GetName());
+            //Debug.Print("Active sheet: " + currentsheet.GetName());
 
             //boolstatus = swModel.Extension.SelectByID2("Sheet1", "SHEET", 0.09205356547875, 0.10872368523, 0, false, 0, null, 0);
             //swModel.EditCopy();

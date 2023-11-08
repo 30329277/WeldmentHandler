@@ -24,7 +24,5 @@ namespace WeldCutList.ViewModel
 			get { return viewName; }
 			set { viewName = value; RaisePropertyChanged(); }
 		}
-
-
 	}
 }
