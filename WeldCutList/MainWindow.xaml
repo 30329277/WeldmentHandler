@@ -39,9 +39,24 @@
             IsReadOnly="True"
             CanUserSortColumns="False"
             FontSize="13" />
-        <StackPanel Grid.Row="2" Orientation="Vertical">
-            <TextBox Name="textBox1"  Text="view数量"  VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="15"/>
-            <TextBox Name="textBox2"  Text="{Binding swViewName}"  VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="15"/>
-        </StackPanel>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="view总数量" FontSize="15"/>
+                <TextBlock Name="textBox1"    FontSize="15"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="sheet名称" FontSize="15" />
+                <TextBlock Name="textBox2"  Text="{Binding SheetName}"   FontSize="15" Background="Cyan" Margin="0 0 10 0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="view名称" FontSize="15" />
+                <TextBlock Name="textBox3"  Text="{Binding ViewName}"   FontSize="15" Background="Cyan" Margin="0 0 10 0" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

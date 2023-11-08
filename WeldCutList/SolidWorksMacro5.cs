@@ -1,5 +1,6 @@
 ﻿using SolidWorks.Interop.sldworks;
 using System.Diagnostics;
+using GalaSoft.MvvmLight;
 
 //SOLIDWORKS API Help
 //Get Centers of Mass in Drawing Views Example (C#)
@@ -27,16 +28,20 @@ using WeldCutList;
 using System.Windows.Shapes;
 using System.Windows.Forms.VisualStyles;
 using System.Windows;
+using WeldCutList.ViewModel;
 
 namespace CenterOfMass_CSharp.csproj
 {
-    public partial class SolidWorksMacro
+    public partial class SolidWorksMacro : ViewModelBase
     {
 
-        ModelDoc2 swModel;
-        DrawingDoc swDrawDoc;
         View swView;
-        public string swViewName;
+        Sheet swSheet;
+        private string swViewName;
+        private string swSheetName;
+
+        DrawingDoc swDrawDoc;
+        ModelDoc2 swModel;
         CenterOfMass swCenterOfMass;
         Annotation swAnnotation;
         int sheetCount;
@@ -47,8 +52,6 @@ namespace CenterOfMass_CSharp.csproj
         //<<<<<<<<<<<<<<
         DrawingDoc swDraw;
         DocumentSpecification swDocSpecification;
-        Sheet swSheet;
-        public string swSheetName;
         DrawingComponent swDrawingComponent;
         Component2 swComponent;
         Entity swEntity;
@@ -59,7 +62,7 @@ namespace CenterOfMass_CSharp.csproj
         object[] Bodies = new object[1];
         DispatchWrapper[] arrBodiesIn = new DispatchWrapper[1];
 
-        public void Main()
+        public void Main(DrawingViewModel drawingViewModel)
         {
             swModel = (ModelDoc2)swApp.ActiveDoc;
             try
@@ -105,18 +108,21 @@ namespace CenterOfMass_CSharp.csproj
                 for (sheetCount = ss.GetLowerBound(0); sheetCount <= ss.GetUpperBound(0); sheetCount++)
                 {
                     vv = (object[])ss[sheetCount];
-
                     for (viewCount = 1; viewCount <= vv.GetUpperBound(0); viewCount++)
                     {
                         swView = (View)vv[viewCount];
-
                         swView.AlignWithView(0, swView);
                     }
 
                     for (viewCount = 1; viewCount <= vv.GetUpperBound(0); viewCount++)
                     {
-                        Debug.Print(((View)vv[viewCount]).GetName2());
+                        //Debug.Print(((View)vv[viewCount]).GetName2());
                         swView = (View)vv[viewCount];
+                        swSheetName= swView.Sheet.GetName();
+                        SwViewName = (string)swView.Name;
+                        Debug.Print(swSheetName);
+                        Debug.Print(SwViewName);
+
                         try
                         {
                             Bodies[0] = arrBody[arrayFromResultQuert[sheetCount * 30 + viewCount - 1].Index];
@@ -157,9 +163,14 @@ namespace CenterOfMass_CSharp.csproj
                         //AlignViewWithTheLongestEdge(swModel, swView.Name);
                         #endregion
 
+                        drawingViewModel.SheetName = SwSheetName;
+                        drawingViewModel.ViewName = SwViewName;
                     }
                 }
             }
+
+
+
         }
 
         public void AlignViewWithTheLongestEdge(ModelDoc2 swModel, string viewName)
@@ -168,15 +179,17 @@ namespace CenterOfMass_CSharp.csproj
             swDraw = (DrawingDoc)swModel;
 
             // Get the current sheet
-            swSheet = (Sheet)swDraw.GetCurrentSheet();
+            //swSheet = (Sheet)swDraw.GetCurrentSheet();
+
+            //想激活当前的sheet, 失败了
             //activate the current sheet 
             //swModel.SetPickMode();
             //var boolActivated= swDraw.ActivateSheet(swSheet.GetName());
             //swDraw.GetCurrentSheet();
             //Console.WriteLine(boolActivated);
 
-            swSheetName = (string)swSheet.GetName();
-            Debug.Print(swSheet.GetName());
+            //SwSheetName = (string)swSheet.GetName();
+            //Debug.Print(swSheet.GetName());
             //Application.Current.Dispatcher.Invoke(new Action(() => {}));
 
             // Select Drawing View1
@@ -184,8 +197,8 @@ namespace CenterOfMass_CSharp.csproj
             swView = (View)((SelectionMgr)swModel.SelectionManager).GetSelectedObject6(1, -1);
 
             // Print the drawing view name and get the component in the drawing view
-            swViewName = (string)swView.Name;
-            Debug.Print(swView.GetName2());
+            //SwViewName = (string)swView.Name;
+            //Debug.Print(swView.GetName2());
             swDrawingComponent = swView.RootDrawingComponent;
             swComponent = swDrawingComponent.Component;
 
@@ -249,6 +262,23 @@ namespace CenterOfMass_CSharp.csproj
 
         public SldWorks swApp;
 
+        public string SwViewName
+        {
+            get { return swViewName; }
+            set
+            {
+                swViewName = value; RaisePropertyChanged();
+            }
+        }
+
+        public string SwSheetName
+        {
+            get { return swSheetName; }
+            set
+            {
+                swSheetName = value; RaisePropertyChanged();
+            }
+        }
     }
 }
 

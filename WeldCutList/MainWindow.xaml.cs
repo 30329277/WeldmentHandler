@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
 using System.Threading;
+using WeldCutList.ViewModel;
 
 namespace WeldCutList
 {
@@ -19,12 +20,16 @@ namespace WeldCutList
 
         CancellationTokenSource cancellationTokenSource;
         CancellationToken cancellationToken;
+        DrawingViewModel drawingViewModel;
 
         public MainWindow()
         {
             InitializeComponent();
+            //this.DataContext = new CenterOfMass_CSharp.csproj.SolidWorksMacro();
             //btn2.Click += Button_Click_2;
             //btn2.Click += Button_Click_3;
+            drawingViewModel = new DrawingViewModel();
+            DataContext = drawingViewModel;
         }
 
         /// <summary>
@@ -119,7 +124,7 @@ namespace WeldCutList
             await Task.Run(() =>
             {
                 var macro = new CenterOfMass_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
-                macro.Main();
+                macro.Main(drawingViewModel);
             });
 
             this.progressBar2.IsIndeterminate = false;
