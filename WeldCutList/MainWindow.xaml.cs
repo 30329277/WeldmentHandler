@@ -25,9 +25,8 @@ namespace WeldCutList
         public MainWindow()
         {
             InitializeComponent();
-            //this.DataContext = new CenterOfMass_CSharp.csproj.SolidWorksMacro();
-            //btn2.Click += Button_Click_2;
-            //btn2.Click += Button_Click_3;
+            btnDuplicate.Click += Button_Click_1;
+            btnDuplicate.Click += Button_Click_4;
             drawingViewModel = new DrawingViewModel();
             DataContext = drawingViewModel;
         }
@@ -46,6 +45,25 @@ namespace WeldCutList
             {
                 var macro = new Macro1CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
                 macro.Main();
+
+                using (CutListSample01Entities cutListSample01Entities1 = new CutListSample01Entities())
+                {
+                    var query =
+                        from product in cutListSample01Entities1.CutLists
+                            //where product.Color == "Red"
+                            //orderby product.ListPrice
+                        select new { product.Folder_Name, product.Body_Name, product.MaterialProperty };
+
+
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        dataGrid1.ItemsSource = query.ToList();
+                        textBox1.Text =
+                        "View 的数量是: " +
+                        query.Count().ToString()
+                        ;
+                    });
+                }
             });
 
             this.progressBar1.IsIndeterminate = false;
@@ -72,7 +90,7 @@ namespace WeldCutList
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     textBox1.Text =
-                    "View 的数量是: "+
+                    "是: " +
                     query.Count().ToString()
                     ;
                 });

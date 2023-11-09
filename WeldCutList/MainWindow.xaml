@@ -22,7 +22,7 @@
             <!--进度条-->
             <ProgressBar Height="20" Minimum="0" Maximum="100" x:Name="progressBar1" />
             <Button Margin="0 5" Click="Button_Click_3">Check the DB</Button>
-            <Button Margin="0 5" Click="Button_Click_1">Duplicate the drawing view</Button>
+            <Button Margin="0 5" x:Name="btnDuplicate" >Duplicate the drawing view</Button>
             <Button Margin="0 5" Click="Button_Click_4">Duplicate the drawing sheets</Button>
             <Button Margin="0 5" Click="Button_Click_5">Traverse the drawing view</Button>
             <!--第二个进度条-->
@@ -47,7 +47,7 @@
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0">
                 <TextBlock Text="view总数量" FontSize="15"/>
-                <TextBlock Name="textBox1"    FontSize="15"/>
+                <TextBlock Name="textBox1"    FontSize="15" Background="Cyan" Margin="0 0 10 0" />
             </StackPanel>
             <StackPanel Grid.Column="1">
                 <TextBlock Text="sheet名称" FontSize="15" />
