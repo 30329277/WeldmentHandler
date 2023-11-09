@@ -1,6 +1,7 @@
 ﻿using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
 using System.Collections;
+using System.Data.Entity.Infrastructure;
 using System.Diagnostics;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
@@ -54,6 +55,11 @@ namespace InsertUnfoldedView_CSharp.csproj
                 arrayList.Add(swView.Name);
                 arrayList.Add(pos[0]);
                 arrayList.Add(pos[1]);
+
+                //尝试把视图放到 0，0 位置
+                pos[0] = 0;
+                pos[1] = 0;
+                swView.Position = pos;
                 Debug.Print("View = " + swView.Name);
                 Debug.Print("  X and Y positions = (" + pos[0] * 1000.0 + ", " + pos[1] * 1000.0 + ") mm");
                 Debug.Print("  X and Y bounding box minimums = (" + outline[0] * 1000.0 + ", " + outline[1] * 1000.0 + ") mm");
@@ -61,39 +67,58 @@ namespace InsertUnfoldedView_CSharp.csproj
                 Debug.Print("  Position locked?" + swView.PositionLocked);
                 swView = (View)swView.GetNextView();
             }
-            if (arrayList.Count<=3)
+            if (arrayList.Count <= 3)
             {
                 System.Windows.Forms.MessageBox.Show("当前工程图需要至少存在一个view!");
                 return;
             }
-            //double xSpace = 0.27/2;
-            double xSpace = 0.19;
-            //double ySpace = 0.15/2;
-            double ySpace = 0.13;
-            ArrayList verticalViewNames = new ArrayList();
-            for (int i = 0; i < 4; i++)
+
+            #region 新的 copy and paste 方案
+
+            Part.Extension.SelectByID2(arrayList[3].ToString(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+            for (int i = 0; i < 29; i++)
             {
-                Part.Extension.SelectByID2(arrayList[3].ToString(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
-                swDraw.CreateUnfoldedViewAt3((double)arrayList[4] + 0.025 + xSpace * (i + 1), (double)arrayList[5], 0, false);
+                //用 editcut() 会报错
+                //Part.EditCut();
+                Part.EditCopy();
+                Part.Paste();
             }
-            for (int i = 0; i < 5; i++)
-            {
-                Part.Extension.SelectByID2(arrayList[3].ToString(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
-                string tempVerticalName = swDraw.CreateUnfoldedViewAt3((double)arrayList[4], (double)arrayList[5] - 0.025 - ySpace * (i + 1), 0, false).Name;
-                verticalViewNames.Add(tempVerticalName);
-            }
-            for (int i = 0; i < verticalViewNames.Count; i++)
-            {
-                object item = verticalViewNames[i];
-                if (item != null)
-                {
-                    for (int j = 0; j < 4; j++)
-                    {
-                        Part.Extension.SelectByID2(item.ToString(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
-                        swDraw.CreateUnfoldedViewAt3((double)arrayList[4] + 0.025 + xSpace * (j + 1), (double)arrayList[5] - 0.025 - ySpace * (i + 1), 0, false);
-                    }
-                }
-            }
+
+            #endregion
+
+
+
+            #region 原来使用CreateUnfoldedViewAt3() 创建 viwe 的部分, 先注释掉
+
+            //double xSpace = 0.19;
+            //double ySpace = 0.13;
+            //ArrayList verticalViewNames = new ArrayList();
+            //for (int i = 0; i < 4; i++)
+            //{
+            //    Part.Extension.SelectByID2(arrayList[3].ToString(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+            //    swDraw.CreateUnfoldedViewAt3((double)arrayList[4] + 0.025 + xSpace * (i + 1), (double)arrayList[5], 0, false);
+            //}
+            //for (int i = 0; i < 5; i++)
+            //{
+            //    Part.Extension.SelectByID2(arrayList[3].ToString(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+            //    string tempVerticalName = swDraw.CreateUnfoldedViewAt3((double)arrayList[4], (double)arrayList[5] - 0.025 - ySpace * (i + 1), 0, false).Name;
+            //    verticalViewNames.Add(tempVerticalName);
+            //}
+            //for (int i = 0; i < verticalViewNames.Count; i++)
+            //{
+            //    object item = verticalViewNames[i];
+            //    if (item != null)
+            //    {
+            //        for (int j = 0; j < 4; j++)
+            //        {
+            //            Part.Extension.SelectByID2(item.ToString(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+            //            swDraw.CreateUnfoldedViewAt3((double)arrayList[4] + 0.025 + xSpace * (j + 1), (double)arrayList[5] - 0.025 - ySpace * (i + 1), 0, false);
+            //        }
+            //    }
+            //}
+
+            #endregion
+
         }
 
         public SldWorks swApp;

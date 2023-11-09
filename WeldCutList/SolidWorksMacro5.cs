@@ -177,11 +177,38 @@ namespace CenterOfMass_CSharp.csproj
 
                         swModel.EditRebuild3();
 
-                        //vPos[0] -= (outline2[2] - outline[2]);
-                        //vPos[1] -= (outline2[2] - outline[2]);
-                        //vPos[0] = outline2[2]-((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
-                        //vPos[1] = outline2[3]-((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
+                        #region 想反偏置 效果不好
+
+                        //判断一下新的view和旧的view比,向哪个象限发生了offset
+                        //double xBoundingBox = outline2[2] - outline[2];
+                        //double yBoundingBox = outline2[3] - outline[3];
+
+                        //if (xBoundingBox > 0 && yBoundingBox > 0)
+                        //{
+                        //    vPos[0] -= ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
+                        //    vPos[1] -= ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
+                        //}
+                        //else if (xBoundingBox > 0 && yBoundingBox < 0)
+                        //{
+                        //    vPos[0] -= ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
+                        //    vPos[1] += ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
+                        //}
+                        //else if (xBoundingBox < 0 && yBoundingBox > 0)
+                        //{
+                        //    vPos[0] += ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
+                        //    vPos[1] -= ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
+                        //}
+                        //else if (xBoundingBox < 0 && yBoundingBox < 0)
+                        //{
+                        //    vPos[0] += ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
+                        //    vPos[1] += ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
+                        //}
+
                         //swView.Position = vPos;
+                        //swModel.EditRebuild3();
+
+                        #endregion
+
 
                         //AlignViewWithTheLongestEdge(swModel, swView.Name);
                         #endregion
