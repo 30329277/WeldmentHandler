@@ -138,6 +138,7 @@
     <Compile Include="CutList.cs">
       <DependentUpon>WeldmentCutlist.tt</DependentUpon>
     </Compile>
+    <Compile Include="SolidWorksMacro6.cs" />
     <Compile Include="ViewModel\DrawingViewModel.cs" />
     <Compile Include="WeldmentCutlist.Context.cs">
       <AutoGen>True</AutoGen>

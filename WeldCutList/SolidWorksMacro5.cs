@@ -82,13 +82,15 @@ namespace CenterOfMass_CSharp.csproj
             var arrBody = (object[])swPart.GetBodies2((int)swBodyType_e.swSolidBody, true);
             var queryArrBodyWithIndex = arrBody.Select((item, index) => new { index, Body = (Body2)item });
 
+            AnnotationCounts_CSharp.csproj.SolidWorksMacro macro = new AnnotationCounts_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
+            var list = macro.Main();
+
             #region autoballoons的参数
 
             AutoBalloonOptions autoballoonParams;
             autoballoonParams = swDrawDoc.CreateAutoBalloonOptions();
 
             #endregion
-
 
             using (CutListSample01Entities cutListSample01Entities1 = new CutListSample01Entities())
             {
@@ -101,7 +103,10 @@ namespace CenterOfMass_CSharp.csproj
                 join p in queryDB on c.Body.Name equals p.Body_Name
                 select new { Index = c.index, BodyName = c.Body.Name, FolderName = p.Folder_Name };
 
-                var arrayFromResultQuert = resultquery.ToArray();
+                var arrayFromResultQuery1 = resultquery.ToArray();
+
+                //注意这个 拉姆达表达式 a.foldername 
+                var arrayFromResultQuery = arrayFromResultQuery1.OrderBy(a => Array.IndexOf(list.ToArray(), a.FolderName)).ToArray();
 
                 Console.WriteLine(queryDB.Count() + " " + arrBody.Count() + " " + queryArrBodyWithIndex.Count());
 
@@ -133,11 +138,11 @@ namespace CenterOfMass_CSharp.csproj
 
                         try
                         {
-                            Bodies[0] = arrBody[arrayFromResultQuert[sheetCount * 30 + viewCount - 1].Index];
+                            Bodies[0] = arrBody[arrayFromResultQuery[sheetCount * 30 + viewCount - 1].Index];
                         }
                         catch (Exception)
                         {
-                            System.Windows.Forms.MessageBox.Show(((30 * (ss.GetUpperBound(0) + 1)) - arrayFromResultQuert.Count()).ToString() + "个view无效");
+                            System.Windows.Forms.MessageBox.Show(((30 * (ss.GetUpperBound(0) + 1)) - arrayFromResultQuery.Count()).ToString() + "个view无效");
                             return;
                         }
                         arrBodiesIn[0] = new DispatchWrapper(Bodies[0]);
@@ -208,7 +213,6 @@ namespace CenterOfMass_CSharp.csproj
                         //swModel.EditRebuild3();
 
                         #endregion
-
 
                         //AlignViewWithTheLongestEdge(swModel, swView.Name);
                         #endregion
