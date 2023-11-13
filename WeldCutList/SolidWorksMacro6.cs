@@ -71,16 +71,13 @@ namespace AnnotationCounts_CSharp.csproj
                     nNumRow = swTable.RowCount;
                     Debug.Print("      Number of visible rows: " + nNumRow);
 
-                    //for (int i = 0; i < nNumRow; i++)
-                    //{
-                    //    for (int j = 0; j < nNumCol; j++)
-                    //    {
-                    //        lines.Add(swTable.DisplayedText2[i, j, true]);
-                    //        Console.WriteLine($"{swTable.DisplayedText2[i, j, true]}");
-                    //    }
-                    //}
+                    // Get the total (hidden + visible) counts
+                    nTotalNumCol = swTable.TotalColumnCount;
+                    Debug.Print("      Total number of visible + hidden columns: " + nTotalNumCol);
+                    nTotalNumRow = swTable.TotalRowCount;
+                    Debug.Print("      Total number of visible + hidden rows: " + nTotalNumRow);
 
-                    for (int i = 1; i < nNumRow; i++)
+                    for (int i = 1; i < nTotalNumRow; i++)
                     {
                         lines.Add(swTable.DisplayedText2[i, 1, true]);
                     }

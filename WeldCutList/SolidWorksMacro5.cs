@@ -161,9 +161,10 @@ namespace CenterOfMass_CSharp.csproj
 
                         //根据长边调整一下方向
                         AlignViewWithTheLongestEdge(swModel, swView.Name);
-
-                        swModel.EditRebuild3();
-                        swModel.ForceRebuild3(true);
+                        //把 editrebuild 注释掉 非常慢
+                        //swModel.EditRebuild3();
+                        //注释掉 forcerebuild 非常慢
+                        //swModel.ForceRebuild3(true);
 
                         //193 136
                         double[] vPos = { 0, 0 };
@@ -180,7 +181,8 @@ namespace CenterOfMass_CSharp.csproj
                         Debug.Print("  X and Y bounding box maximums = (" + outline2[2] * 1000.0 + ", " + outline2[3] * 1000.0 + ") mm");
                         Debug.Print("  bounding box size = (" + (outline2[2] - outline2[0]) * 1000.0 + ", " + (outline2[3] - outline2[1]) * 1000.0 + ") mm");
 
-                        swModel.EditRebuild3();
+                        //把 editrebuild 注释掉 非常慢
+                        //swModel.EditRebuild3();
 
                         #region 想反偏置 效果不好
 
@@ -214,6 +216,7 @@ namespace CenterOfMass_CSharp.csproj
 
                         #endregion
 
+                        //注释掉, 比较费时
                         //AlignViewWithTheLongestEdge(swModel, swView.Name);
                         #endregion
 
