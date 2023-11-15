@@ -29,7 +29,7 @@ namespace CopyAndPasteCsharp.csproj
     public partial class SolidWorksMacro
     {
 
-        public void Main(int sheetQuantity=1)
+        public void Main(int sheetQuantity)
         {
             DrawingDoc Part = default(DrawingDoc);
             ModelDoc2 swModel = default(ModelDoc2);
@@ -55,9 +55,15 @@ namespace CopyAndPasteCsharp.csproj
             //Part.ActivateSheet(currentsheet.GetName());
             //Debug.Print("Active sheet: " + currentsheet.GetName());
 
+            if (sheetQuantity<=0)
+            {
+                sheetQuantity = 1;
+            }
+
             for (int i = 0; i < sheetQuantity; i++)
             {
-                boolstatus = swModel.Extension.SelectByID2("Sheet1", "SHEET", 0.09205356547875, 0.10872368523, 0, false, 0, null, 0);
+                //boolstatus = swModel.Extension.SelectByID2("Sheet1", "SHEET", 0.09205356547875, 0.10872368523, 0, false, 0, null, 0);
+                boolstatus = swModel.Extension.SelectByID2(currentsheet.GetName(), "SHEET", 0.09205356547875, 0.10872368523, 0, false, 0, null, 0);
                 swModel.EditCopy();
                 boolstatus = Part.PasteSheet((int)swInsertOptions_e.swInsertOption_AfterSelectedSheet, (int)swRenameOptions_e.swRenameOption_No);
                 currentsheet = (Sheet)Part.GetCurrentSheet();
