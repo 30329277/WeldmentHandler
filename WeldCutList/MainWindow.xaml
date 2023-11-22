@@ -22,7 +22,7 @@
             <!--进度条-->
             <ProgressBar Height="20" Minimum="0" Maximum="100" x:Name="progressBar1" />
             <Button Margin="0 5" Click="Button_Click_3">(暂时不用)Check the DB</Button>
-            <Button Margin="0 5" x:Name="btnDuplicate" >Duplicate view and sheets</Button>
+            <Button Margin="0 5" x:Name="btnDuplicate" >Duplicate views and sheets</Button>
             <Button Margin="0 5" Click="Button_Click_4">(暂时不用)Duplicate the drawing sheets</Button>
             <Button Margin="0 5" Click="Button_Click_5">Traverse the drawing view</Button>
             <!--第二个进度条-->

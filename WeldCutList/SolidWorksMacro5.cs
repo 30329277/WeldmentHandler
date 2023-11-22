@@ -82,6 +82,7 @@ namespace CenterOfMass_CSharp.csproj
             var arrBody = (object[])swPart.GetBodies2((int)swBodyType_e.swSolidBody, true);
             var queryArrBodyWithIndex = arrBody.Select((item, index) => new { index, Body = (Body2)item });
 
+            //用这个方法拿到weld cut list bom 集合用于为 body 和 localDB 进行排序
             AnnotationCounts_CSharp.csproj.SolidWorksMacro macro = new AnnotationCounts_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
             var list = macro.Main();
 
