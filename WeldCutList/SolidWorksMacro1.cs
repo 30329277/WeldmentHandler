@@ -1,9 +1,6 @@
 ﻿using SolidWorks.Interop.sldworks;
-using SolidWorks.Interop.swconst;
 using System.Collections;
-using System.Data.Entity.Infrastructure;
 using System.Diagnostics;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 //SOLIDWORKS API Help
 //Create Unfolded View Example (C#)

@@ -1,6 +1,4 @@
 ﻿using SolidWorks.Interop.sldworks;
-using System.Diagnostics;
-
 //SOLIDWORKS API Help
 //Get the Total Number of Columns and Rows in a Table Example (C#)
 //This example shows how to get the total number of columns and rows (visible and hidden) in a table annotation.
@@ -11,18 +9,8 @@ using System.Diagnostics;
 //
 // Postconditions: Inspect the Immediate Window.
 //--------------------------------------------------------------------------
-using Microsoft.VisualBasic;
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Data;
-using SolidWorks.Interop.swconst;
-using System.Linq;
-using System.Windows;
-using System.Data.Entity.Core;
-using Microsoft.VisualBasic.Logging;
-using System.Xml.Linq;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace AnnotationCounts_CSharp.csproj
 {

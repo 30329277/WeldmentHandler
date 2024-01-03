@@ -1,10 +1,7 @@
 ﻿using SolidWorks.Interop.sldworks;
+using System;
 using System.Diagnostics;
 using WeldCutList;
-using System.Linq;
-using System.Windows.Shapes;
-using System;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 
 
 //SOLIDWORKS API Help
@@ -236,7 +233,7 @@ namespace Macro1CSharp.csproj
                             Debug.Print("Feature name: " + thisFeat.Name);
                             Debug.Print("          Body name: " + Body.Name);
 
-                            CutList cutList = new CutList { Folder_Name = thisFeat.Name, Body_Name = Body.Name , MaterialProperty=thisFeat.GetTypeName2()};
+                            CutList cutList = new CutList { Folder_Name = thisFeat.Name, Body_Name = Body.Name, MaterialProperty = thisFeat.GetTypeName2() };
                             cutListSample01Entities1.CutLists.Add(cutList);
 
                             try

@@ -18,12 +18,7 @@ using System.Diagnostics;
 // 3. Copy and pastes Sheet1 as Sheet1(3) and activates Sheet1(3).
 // 4. Examine the FeatureManager design tree and Immediate window.
 //----------------------------------------------------------
-using SolidWorks.Interop.sldworks;
-using SolidWorks.Interop.swconst;
-using System.Runtime.InteropServices;
-using System;
-using System.Diagnostics;
- 
+
 namespace CopyAndPasteCsharp.csproj
 {
     public partial class SolidWorksMacro
@@ -55,7 +50,7 @@ namespace CopyAndPasteCsharp.csproj
             //Part.ActivateSheet(currentsheet.GetName());
             //Debug.Print("Active sheet: " + currentsheet.GetName());
 
-            if (sheetQuantity<=0)
+            if (sheetQuantity <= 0)
             {
                 sheetQuantity = 1;
             }
@@ -68,7 +63,7 @@ namespace CopyAndPasteCsharp.csproj
                 boolstatus = Part.PasteSheet((int)swInsertOptions_e.swInsertOption_AfterSelectedSheet, (int)swRenameOptions_e.swRenameOption_No);
                 currentsheet = (Sheet)Part.GetCurrentSheet();
                 Part.ActivateSheet(currentsheet.GetName());
-                Debug.Print("Active sheet: " + currentsheet.GetName()); 
+                Debug.Print("Active sheet: " + currentsheet.GetName());
             }
 
         }

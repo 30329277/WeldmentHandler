@@ -1,7 +1,6 @@
-﻿using SolidWorks.Interop.sldworks;
-using System.Diagnostics;
-using GalaSoft.MvvmLight;
-
+﻿using GalaSoft.MvvmLight;
+using SolidWorks.Interop.sldworks;
+using SolidWorks.Interop.swconst;
 //SOLIDWORKS API Help
 //Get Centers of Mass in Drawing Views Example (C#)
 //This example shows how to get the centers of mass in drawing views.
@@ -13,25 +12,20 @@ using GalaSoft.MvvmLight;
 // all of the centers of mass in all of the views of the
 // drawing.
 //----------------------------------------------------------------------
-using Microsoft.VisualBasic;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using SolidWorks.Interop.sldworks;
-using SolidWorks.Interop.swconst;
-using System.Runtime.InteropServices;
-using System.Data.Entity.Infrastructure;
 using System.Linq;
+using System.Runtime.InteropServices;
 using WeldCutList;
-using System.Windows.Shapes;
-using System.Windows.Forms.VisualStyles;
-using System.Windows;
 using WeldCutList.ViewModel;
 
 namespace CenterOfMass_CSharp.csproj
 {
+    /// <summary>
+    /// 和命名空间 CenterOfMass_CSharp无关, 用于遍历工程图上所有的view并
+    /// </summary>
     public partial class SolidWorksMacro : ViewModelBase
     {
 
@@ -62,6 +56,10 @@ namespace CenterOfMass_CSharp.csproj
         object[] Bodies = new object[1];
         DispatchWrapper[] arrBodiesIn = new DispatchWrapper[1];
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="drawingViewModel">DrawingViewModel类型的drawingViewModel</param>
         public void Main(DrawingViewModel drawingViewModel)
         {
             swModel = (ModelDoc2)swApp.ActiveDoc;
@@ -79,10 +77,12 @@ namespace CenterOfMass_CSharp.csproj
             var tempView = (View)tempvv[1];
             var swModelTemp01 = tempView.ReferencedDocument;
             var swPart = (PartDoc)swModelTemp01;
+            //获取当前工程图的reference part 的所有body 的集合
             var arrBody = (object[])swPart.GetBodies2((int)swBodyType_e.swSolidBody, true);
+            //使用了 select 函数的重载方法 获取集合中元素 + index, 投影为新的集合 queryArrBodyWithIndex
             var queryArrBodyWithIndex = arrBody.Select((item, index) => new { index, Body = (Body2)item });
 
-            //用这个方法拿到weld cut list bom 集合用于为 body 和 localDB 进行排序
+            //用这个方法拿到工程图中的 weld cut list bom , var list (集合用于为 body 和 localDB 进行排序)
             AnnotationCounts_CSharp.csproj.SolidWorksMacro macro = new AnnotationCounts_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
             var list = macro.Main();
 
@@ -95,10 +95,12 @@ namespace CenterOfMass_CSharp.csproj
 
             using (CutListSample01Entities cutListSample01Entities1 = new CutListSample01Entities())
             {
+                //localDB 投影成 queryDB
                 var queryDB =
                 from product in cutListSample01Entities1.CutLists
                 select new { product.Folder_Name, product.Body_Name, product.MaterialProperty };
 
+                //零件设计树的body集合和 queryDB（来自与localDB）join后投影为新的集合 resultquery
                 var resultquery =
                 from c in queryArrBodyWithIndex
                 join p in queryDB on c.Body.Name equals p.Body_Name
@@ -228,6 +230,11 @@ namespace CenterOfMass_CSharp.csproj
             }
         }
 
+        /// <summary>
+        /// 这个方法用于调整 view 的方向, 找到最长的边, 然后align
+        /// </summary>
+        /// <param name="swModel"></param>
+        /// <param name="viewName"></param>
         public void AlignViewWithTheLongestEdge(ModelDoc2 swModel, string viewName)
         {
             swModel = (ModelDoc2)swApp.ActiveDoc;

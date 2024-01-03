@@ -1,13 +1,9 @@
 ﻿using SolidWorks.Interop.sldworks;
-using System.Windows;
-using System.Data.Entity.Core;
-using System.Linq;
-using Microsoft.VisualBasic.Logging;
-using System.Xml.Linq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using System;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
 using WeldCutList.ViewModel;
 
 namespace WeldCutList
@@ -113,20 +109,28 @@ namespace WeldCutList
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Button_Click_4(object sender, RoutedEventArgs e)
+        private async void Button_Click_4(object sender, RoutedEventArgs e)
         {
-            using (CutListSample01Entities cutListSample01Entities1 = new CutListSample01Entities())
+            this.progressBar1.IsIndeterminate = true;
+
+            await Task.Run(() =>
             {
-                var query =
-                    from product in cutListSample01Entities1.CutLists
-                        //where product.Color == "Red"
-                        //orderby product.ListPrice
-                    select new { product.Folder_Name, product.Body_Name };
-                var macro = new CopyAndPasteCsharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
-                var sheetQuantity = Math.Ceiling(Convert.ToDouble(query.Count()) / 30);
-                Console.WriteLine(query.Count() + "   " + Convert.ToDouble(query.Count()) / 30 + "  " + sheetQuantity);
-                macro.Main(query.Count() / 30);
-            }
+                using (CutListSample01Entities cutListSample01Entities1 = new CutListSample01Entities())
+                {
+                    var query =
+                        from product in cutListSample01Entities1.CutLists
+                            //where product.Color == "Red"
+                            //orderby product.ListPrice
+                        select new { product.Folder_Name, product.Body_Name };
+                    var macro = new CopyAndPasteCsharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
+                    var sheetQuantity = Math.Ceiling(Convert.ToDouble(query.Count()) / 30);
+                    Console.WriteLine(query.Count() + "   " + Convert.ToDouble(query.Count()) / 30 + "  " + sheetQuantity);
+                    macro.Main(query.Count() / 30);
+                }
+            });
+
+            this.progressBar1.IsIndeterminate = false;
+            this.progressBar1.Value = 100;
         }
 
         /// <summary>
@@ -137,16 +141,17 @@ namespace WeldCutList
         async private void Button_Click_5(object sender, RoutedEventArgs e)
         {
             //this.btn2.IsEnabled = false;
-            this.progressBar2.IsIndeterminate = true;
+            this.progressBar1.IsIndeterminate = true;
 
             await Task.Run(() =>
             {
                 var macro = new CenterOfMass_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
+                //最核心的方法
                 macro.Main(drawingViewModel);
             });
 
-            this.progressBar2.IsIndeterminate = false;
-            this.progressBar2.Value = 100;
+            this.progressBar1.IsIndeterminate = false;
+            this.progressBar1.Value = 100;
         }
 
     }

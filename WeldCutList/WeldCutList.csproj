@@ -70,7 +70,7 @@
     <NoWin32Manifest>true</NoWin32Manifest>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>logo2 %281%29.ico</ApplicationIcon>
+    <ApplicationIcon>2024-01-03 08_32_17-Icon of weldcutlist.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="CommonServiceLocator, Version=2.0.2.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
@@ -236,6 +236,7 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="2024-01-03 08_32_17-Icon of weldcutlist.ico" />
     <Content Include="CutListSample01.mdf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -243,7 +244,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <DependentUpon>CutListSample01.mdf</DependentUpon>
     </Content>
-    <Resource Include="logo2 %281%29.ico" />
     <Content Include="WeldmentCutlist.Context.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>WeldmentCutlist.Context.cs</LastGenOutput>

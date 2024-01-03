@@ -1,28 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GalaSoft.MvvmLight;
+﻿using GalaSoft.MvvmLight;
 
 namespace WeldCutList.ViewModel
 {
-    public class DrawingViewModel:ViewModelBase
+    public class DrawingViewModel : ViewModelBase
     {
-		private string sheetName;
+        private string sheetName;
 
-		public string SheetName
+        public string SheetName
         {
-			get { return sheetName; }
-			set { sheetName = value; RaisePropertyChanged(); }
-		}
+            get { return sheetName; }
+            set { sheetName = value; RaisePropertyChanged(); }
+        }
 
-		private string viewName;
+        private string viewName;
 
-		public string ViewName
-		{
-			get { return viewName; }
-			set { viewName = value; RaisePropertyChanged(); }
-		}
-	}
+        public string ViewName
+        {
+            get { return viewName; }
+            set { viewName = value; RaisePropertyChanged(); }
+        }
+    }
 }

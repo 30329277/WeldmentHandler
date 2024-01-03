@@ -17,16 +17,16 @@
             <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
         <StackPanel  VerticalAlignment="Top">
+            <ProgressBar Height="20" Minimum="0" Maximum="100" x:Name="progressBar1" />
             <!--第一个按钮-->
             <Button Name="btn2" Margin="0 5" Click="Button_Click_2">Get solid bodies from cut-list folders</Button>
             <!--进度条-->
-            <ProgressBar Height="20" Minimum="0" Maximum="100" x:Name="progressBar1" />
-            <Button Margin="0 5" Click="Button_Click_3">(暂时不用)Check the DB</Button>
+            <!--<Button Margin="0 5" Click="Button_Click_3">(暂时不用)Check the DB</Button>-->
             <Button Margin="0 5" x:Name="btnDuplicate" >Duplicate views and sheets</Button>
-            <Button Margin="0 5" Click="Button_Click_4">(暂时不用)Duplicate the drawing sheets</Button>
+            <!--<Button Margin="0 5" Click="Button_Click_4">(暂时不用)Duplicate the drawing sheets</Button>-->
             <Button Margin="0 5" Click="Button_Click_5">Traverse the drawing view</Button>
             <!--第二个进度条-->
-            <ProgressBar Height="20" Minimum="0" Maximum="100" x:Name="progressBar2" />
+            <!--<ProgressBar Height="20" Minimum="0" Maximum="100" x:Name="progressBar2" />-->
         </StackPanel>
 
         <DataGrid
@@ -35,7 +35,7 @@
             Margin="10,10,10,10" 
             VerticalAlignment="Top" 
             Width="Auto" 
-            Height="300"
+            Height="370"
             IsReadOnly="True"
             CanUserSortColumns="False"
             FontSize="13" />
