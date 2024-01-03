@@ -146,7 +146,7 @@ namespace WeldCutList
             await Task.Run(() =>
             {
                 var macro = new CenterOfMass_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
-                //最核心的方法
+                //最核心的方法:获取新的集合,气球, 摆正等功能
                 macro.Main(drawingViewModel);
             });
 

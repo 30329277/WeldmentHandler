@@ -57,12 +57,13 @@ namespace CenterOfMass_CSharp.csproj
         DispatchWrapper[] arrBodiesIn = new DispatchWrapper[1];
 
         /// <summary>
-        /// 
+        /// 获取新的集合,气球, 摆正等功能
         /// </summary>
         /// <param name="drawingViewModel">DrawingViewModel类型的drawingViewModel</param>
         public void Main(DrawingViewModel drawingViewModel)
         {
             swModel = (ModelDoc2)swApp.ActiveDoc;
+            //try catch 只是判断当前打开的是否是工程图
             try
             {
                 swDrawDoc = (DrawingDoc)swModel;
@@ -80,6 +81,7 @@ namespace CenterOfMass_CSharp.csproj
             //获取当前工程图的reference part 的所有body 的集合
             var arrBody = (object[])swPart.GetBodies2((int)swBodyType_e.swSolidBody, true);
             //使用了 select 函数的重载方法 获取集合中元素 + index, 投影为新的集合 queryArrBodyWithIndex
+            //一般情况使用的 select c=>c , 这里的重载用了两个参数 select((item,index)=>new{})
             var queryArrBodyWithIndex = arrBody.Select((item, index) => new { index, Body = (Body2)item });
 
             //用这个方法拿到工程图中的 weld cut list bom , var list (集合用于为 body 和 localDB 进行排序)
@@ -101,6 +103,7 @@ namespace CenterOfMass_CSharp.csproj
                 select new { product.Folder_Name, product.Body_Name, product.MaterialProperty };
 
                 //零件设计树的body集合和 queryDB（来自与localDB）join 后投影为新的集合 resultquery
+                //生成的新集合包括：三列 index bodyname foldername , 集合元素的数量 和 localDB的元素数量一致
                 var resultquery =
                 from c in queryArrBodyWithIndex
                 join p in queryDB on c.Body.Name equals p.Body_Name
@@ -108,7 +111,7 @@ namespace CenterOfMass_CSharp.csproj
 
                 var arrayFromResultQuery1 = resultquery.ToArray();
 
-                //注意这个 拉姆达表达式用于把arrayFromResultQuery1按照工程图中的 weld cut list bom进行排序  (a.foldername , 是排序列)
+                //注意这个 拉姆达表达式用于把 arrayFromResultQuery1 按照工程图中的 weld cut list bom 进行排序  (a.foldername , 是排序列)
                 var arrayFromResultQuery = arrayFromResultQuery1.OrderBy(a => Array.IndexOf(list.ToArray(), a.FolderName)).ToArray();
 
                 Console.WriteLine(queryDB.Count() + " " + arrBody.Count() + " " + queryArrBodyWithIndex.Count());
