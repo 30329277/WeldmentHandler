@@ -100,7 +100,7 @@ namespace CenterOfMass_CSharp.csproj
                 from product in cutListSample01Entities1.CutLists
                 select new { product.Folder_Name, product.Body_Name, product.MaterialProperty };
 
-                //零件设计树的body集合和 queryDB（来自与localDB）join后投影为新的集合 resultquery
+                //零件设计树的body集合和 queryDB（来自与localDB）join 后投影为新的集合 resultquery
                 var resultquery =
                 from c in queryArrBodyWithIndex
                 join p in queryDB on c.Body.Name equals p.Body_Name
@@ -108,7 +108,7 @@ namespace CenterOfMass_CSharp.csproj
 
                 var arrayFromResultQuery1 = resultquery.ToArray();
 
-                //注意这个 拉姆达表达式 a.foldername 
+                //注意这个 拉姆达表达式用于把arrayFromResultQuery1按照工程图中的 weld cut list bom进行排序  (a.foldername , 是排序列)
                 var arrayFromResultQuery = arrayFromResultQuery1.OrderBy(a => Array.IndexOf(list.ToArray(), a.FolderName)).ToArray();
 
                 Console.WriteLine(queryDB.Count() + " " + arrBody.Count() + " " + queryArrBodyWithIndex.Count());
@@ -116,12 +116,14 @@ namespace CenterOfMass_CSharp.csproj
                 for (sheetCount = ss.GetLowerBound(0); sheetCount <= ss.GetUpperBound(0); sheetCount++)
                 {
                     vv = (object[])ss[sheetCount];
+                    //这个循环实际测试没有效果
                     for (viewCount = 1; viewCount <= vv.GetUpperBound(0); viewCount++)
                     {
                         swView = (View)vv[viewCount];
                         swView.AlignWithView(0, swView);
                     }
 
+                    //这个循环有效果
                     for (viewCount = 1; viewCount <= vv.GetUpperBound(0); viewCount++)
                     {
                         //Debug.Print(((View)vv[viewCount]).GetName2());
@@ -148,6 +150,7 @@ namespace CenterOfMass_CSharp.csproj
                             System.Windows.Forms.MessageBox.Show(((30 * (ss.GetUpperBound(0) + 1)) - arrayFromResultQuery.Count()).ToString() + "个view无效");
                             return;
                         }
+                        //这两行代码真正的替换 body 
                         arrBodiesIn[0] = new DispatchWrapper(Bodies[0]);
                         swView.Bodies = (arrBodiesIn);
 
