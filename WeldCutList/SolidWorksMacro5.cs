@@ -20,11 +20,13 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using WeldCutList;
 using WeldCutList.ViewModel;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace CenterOfMass_CSharp.csproj
 {
     /// <summary>
-    /// 和命名空间 CenterOfMass_CSharp无关, 用于遍历工程图上所有的view并
+    /// 和命名空间 CenterOfMass_CSharp无关, 用于遍历工程图上所有的 view 并获取新的集合,气球, 摆正等功能
     /// </summary>
     public partial class SolidWorksMacro : ViewModelBase
     {
@@ -80,6 +82,7 @@ namespace CenterOfMass_CSharp.csproj
             var swPart = (PartDoc)swModelTemp01;
             //获取当前工程图的reference part 的所有body 的集合
             var arrBody = (object[])swPart.GetBodies2((int)swBodyType_e.swSolidBody, true);
+
             //使用了 select 函数的重载方法 获取集合中元素 + index, 投影为新的集合 queryArrBodyWithIndex
             //一般情况使用的 select c=>c , 这里的重载用了两个参数 select((item,index)=>new{})
             var queryArrBodyWithIndex = arrBody.Select((item, index) => new { index, Body = (Body2)item });
@@ -95,143 +98,156 @@ namespace CenterOfMass_CSharp.csproj
 
             #endregion
 
-            using (CutListSample01Entities cutListSample01Entities1 = new CutListSample01Entities())
+            // Load JSON data from SolidWorksMacro3
+            string jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cutlist.json");
+            if (!File.Exists(jsonFilePath))
             {
-                //localDB 投影成 queryDB
-                var queryDB =
-                from product in cutListSample01Entities1.CutLists
-                select new { product.Folder_Name, product.Body_Name, product.MaterialProperty };
+                System.Windows.Forms.MessageBox.Show($"JSON file not found: {jsonFilePath}");
+                return;
+            }
 
-                //零件设计树的body集合和 queryDB（来自与localDB）join 后投影为新的集合 resultquery
-                //生成的新集合包括：三列 index bodyname foldername , 集合元素的数量 和 localDB的元素数量一致
-                var resultquery =
-                from c in queryArrBodyWithIndex
-                join p in queryDB on c.Body.Name equals p.Body_Name
-                select new { Index = c.index, BodyName = c.Body.Name, FolderName = p.Folder_Name };
+            string jsonData = File.ReadAllText(jsonFilePath);
+            var cutListData = JsonConvert.DeserializeObject<List<CutListItem>>(jsonData);
 
-                var arrayFromResultQuery1 = resultquery.ToArray();
+            // Project JSON data to queryDB
+            var queryDB = cutListData.Select(product => new { product.Folder_Name, product.Body_Name, product.MaterialProperty });
 
-                //注意这个 拉姆达表达式用于把 arrayFromResultQuery1 按照工程图中的 weld cut list bom 进行排序  (a.foldername , 是排序列)
-                var arrayFromResultQuery = arrayFromResultQuery1.OrderBy(a => Array.IndexOf(list.ToArray(), a.FolderName)).ToArray();
+            //零件设计树的body集合和 queryDB（来自与localDB）join 后投影为新的集合 resultquery
+            //生成的新集合包括：三列 index bodyname foldername , 集合元素的数量 和 localDB的元素数量一致
+            var resultquery =
+            from c in queryArrBodyWithIndex
+            join p in queryDB on c.Body.Name equals p.Body_Name
+            select new { Index = c.index, BodyName = c.Body.Name, FolderName = p.Folder_Name };
 
-                Console.WriteLine(queryDB.Count() + " " + arrBody.Count() + " " + queryArrBodyWithIndex.Count());
+            var arrayFromResultQuery1 = resultquery.ToArray();
 
-                for (sheetCount = ss.GetLowerBound(0); sheetCount <= ss.GetUpperBound(0); sheetCount++)
+            //注意这个 拉姆达表达式用于把 arrayFromResultQuery1 按照工程图中的 weld cut list bom 进行排序  (a.foldername , 是排序列)
+            var arrayFromResultQuery = arrayFromResultQuery1.OrderBy(a => Array.IndexOf(list.ToArray(), a.FolderName)).ToArray();
+
+            //这里是打印 queryDB,arrBody,queryArrBodyWithIndex 集合中元素的数量
+            Console.WriteLine(queryDB.Count() + " " + arrBody.Count() + " " + queryArrBodyWithIndex.Count());
+            Console.WriteLine($"当前工程图的reference part 的所有body 的集合数量是:{arrBody.Count()}");
+            Console.WriteLine($"{queryDB.FirstOrDefault().ToString()},queryDB集合的数量: {queryDB.Count()}");
+            Console.WriteLine($"{queryArrBodyWithIndex.FirstOrDefault().index},{queryArrBodyWithIndex.FirstOrDefault().Body},queryArrBodyWithIndex的数量是:  {queryArrBodyWithIndex.Count()}");
+            Console.WriteLine($"list(来自BOM)的数量是:{list.Count}");
+            Console.WriteLine($"resultquery的数量是：{resultquery.Count()}");
+            Console.WriteLine($"arrayFromResultQuery的数量是:{arrayFromResultQuery.Count()}");
+
+            for (sheetCount = ss.GetLowerBound(0); sheetCount <= ss.GetUpperBound(0); sheetCount++)
+            {
+                vv = (object[])ss[sheetCount];
+                //这个循环实际测试没有效果
+                for (viewCount = 1; viewCount <= vv.GetUpperBound(0); viewCount++)
                 {
-                    vv = (object[])ss[sheetCount];
-                    //这个循环实际测试没有效果
-                    for (viewCount = 1; viewCount <= vv.GetUpperBound(0); viewCount++)
+                    swView = (View)vv[viewCount];
+                    swView.AlignWithView(0, swView);
+                }
+
+                //这个循环有效果
+                for (viewCount = 1; viewCount <= vv.GetUpperBound(0); viewCount++)
+                {
+                    //Debug.Print(((View)vv[viewCount]).GetName2());
+                    swView = (View)vv[viewCount];
+                    swSheetName = swView.Sheet.GetName();
+                    SwViewName = (string)swView.Name;
+                    Debug.Print(swSheetName);
+                    Debug.Print(SwViewName);
+
+                    //试试outline在view 重置 body 以后是否发生了变化
+                    double[] outline = (double[])swView.GetOutline();
+                    double[] pos = (double[])swView.Position;
+                    Debug.Print("  X and Y positions = (" + pos[0] * 1000.0 + ", " + pos[1] * 1000.0 + ") mm");
+                    Debug.Print("  X and Y bounding box minimums = (" + outline[0] * 1000.0 + ", " + outline[1] * 1000.0 + ") mm");
+                    Debug.Print("  X and Y bounding box maximums = (" + outline[2] * 1000.0 + ", " + outline[3] * 1000.0 + ") mm");
+                    Debug.Print("  bounding box size = (" + (outline[2] - outline[0]) * 1000.0 + ", " + (outline[3] - outline[1]) * 1000.0 + ") mm");
+
+                    try
                     {
-                        swView = (View)vv[viewCount];
-                        swView.AlignWithView(0, swView);
+                        Bodies[0] = arrBody[arrayFromResultQuery[sheetCount * 30 + viewCount - 1].Index];
                     }
-
-                    //这个循环有效果
-                    for (viewCount = 1; viewCount <= vv.GetUpperBound(0); viewCount++)
+                    catch (Exception)
                     {
-                        //Debug.Print(((View)vv[viewCount]).GetName2());
-                        swView = (View)vv[viewCount];
-                        swSheetName = swView.Sheet.GetName();
-                        SwViewName = (string)swView.Name;
-                        Debug.Print(swSheetName);
-                        Debug.Print(SwViewName);
-
-                        //试试outline在view 重置 body 以后是否发生了变化
-                        double[] outline = (double[])swView.GetOutline();
-                        double[] pos = (double[])swView.Position;
-                        Debug.Print("  X and Y positions = (" + pos[0] * 1000.0 + ", " + pos[1] * 1000.0 + ") mm");
-                        Debug.Print("  X and Y bounding box minimums = (" + outline[0] * 1000.0 + ", " + outline[1] * 1000.0 + ") mm");
-                        Debug.Print("  X and Y bounding box maximums = (" + outline[2] * 1000.0 + ", " + outline[3] * 1000.0 + ") mm");
-                        Debug.Print("  bounding box size = (" + (outline[2] - outline[0]) * 1000.0 + ", " + (outline[3] - outline[1]) * 1000.0 + ") mm");
-
-                        try
-                        {
-                            Bodies[0] = arrBody[arrayFromResultQuery[sheetCount * 30 + viewCount - 1].Index];
-                        }
-                        catch (Exception)
-                        {
-                            System.Windows.Forms.MessageBox.Show(((30 * (ss.GetUpperBound(0) + 1)) - arrayFromResultQuery.Count()).ToString() + "个view无效");
-                            return;
-                        }
-                        //这两行代码真正的替换 body 
-                        arrBodiesIn[0] = new DispatchWrapper(Bodies[0]);
-                        swView.Bodies = (arrBodiesIn);
-
-                        #region 添加气球 并重置位置
-
-                        //增加气球功能
-                        swModel.Extension.SelectByID2(((View)vv[viewCount]).GetName2(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
-                        swDrawDoc.AutoBalloon5(autoballoonParams);
-                        //视图breakalignment 和 position 功能
-                        swModel.ClearSelection2(true);
-
-                        //已经把 break alignment 提前到了前边, 所以这一行注释掉
-                        //swView.AlignWithView(0, swView);
-
-                        //根据长边调整一下方向
-                        AlignViewWithTheLongestEdge(swModel, swView.Name);
-                        //把 editrebuild 注释掉 非常慢
-                        //swModel.EditRebuild3();
-                        //注释掉 forcerebuild 非常慢
-                        //swModel.ForceRebuild3(true);
-
-                        //193 136
-                        double[] vPos = { 0, 0 };
-                        vPos[0] = ((viewCount - 1) % 5) * 0.193 + 0.096;
-                        vPos[1] = 0.82 - ((viewCount - 1) / 5) * 0.136 - 0.068;
-                        swView.Position = vPos;
-                        Console.WriteLine($"第{viewCount}个视图的坐标:x={vPos[0]};y={vPos[1]}");
-
-                        //试试outline在view 重置 body 以后是否发生了变化
-                        var outline2 = (double[])swView.GetOutline();
-                        var pos2 = (double[])swView.Position;
-                        Debug.Print("  X and Y positions = (" + pos2[0] * 1000.0 + ", " + pos2[1] * 1000.0 + ") mm");
-                        Debug.Print("  X and Y bounding box minimums = (" + outline2[0] * 1000.0 + ", " + outline2[1] * 1000.0 + ") mm");
-                        Debug.Print("  X and Y bounding box maximums = (" + outline2[2] * 1000.0 + ", " + outline2[3] * 1000.0 + ") mm");
-                        Debug.Print("  bounding box size = (" + (outline2[2] - outline2[0]) * 1000.0 + ", " + (outline2[3] - outline2[1]) * 1000.0 + ") mm");
-
-                        //把 editrebuild 注释掉 非常慢
-                        //swModel.EditRebuild3();
-
-                        #region 想反偏置 效果不好
-
-                        //判断一下新的view和旧的view比,向哪个象限发生了offset
-                        //double xBoundingBox = outline2[2] - outline[2];
-                        //double yBoundingBox = outline2[3] - outline[3];
-
-                        //if (xBoundingBox > 0 && yBoundingBox > 0)
-                        //{
-                        //    vPos[0] -= ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
-                        //    vPos[1] -= ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
-                        //}
-                        //else if (xBoundingBox > 0 && yBoundingBox < 0)
-                        //{
-                        //    vPos[0] -= ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
-                        //    vPos[1] += ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
-                        //}
-                        //else if (xBoundingBox < 0 && yBoundingBox > 0)
-                        //{
-                        //    vPos[0] += ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
-                        //    vPos[1] -= ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
-                        //}
-                        //else if (xBoundingBox < 0 && yBoundingBox < 0)
-                        //{
-                        //    vPos[0] += ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
-                        //    vPos[1] += ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
-                        //}
-
-                        //swView.Position = vPos;
-                        //swModel.EditRebuild3();
-
-                        #endregion
-
-                        //注释掉, 比较费时
-                        //AlignViewWithTheLongestEdge(swModel, swView.Name);
-                        #endregion
-
-                        drawingViewModel.SheetName = SwSheetName;
-                        drawingViewModel.ViewName = SwViewName;
+                        System.Windows.Forms.MessageBox.Show(((30 * (ss.GetUpperBound(0) + 1)) - arrayFromResultQuery.Count()).ToString() + "个view无效");
+                        return;
                     }
+                    //这两行代码真正的替换 body 
+                    arrBodiesIn[0] = new DispatchWrapper(Bodies[0]);
+                    swView.Bodies = (arrBodiesIn);
+
+                    #region 添加气球 并重置位置
+
+                    //增加气球功能
+                    swModel.Extension.SelectByID2(((View)vv[viewCount]).GetName2(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+                    swDrawDoc.AutoBalloon5(autoballoonParams);
+                    //视图breakalignment 和 position 功能
+                    swModel.ClearSelection2(true);
+
+                    //已经把 break alignment 提前到了前边, 所以这一行注释掉
+                    //swView.AlignWithView(0, swView);
+
+                    //根据长边调整一下方向
+                    AlignViewWithTheLongestEdge(swModel, swView.Name);
+                    //把 editrebuild 注释掉 非常慢
+                    //swModel.EditRebuild3();
+                    //注释掉 forcerebuild 非常慢
+                    //swModel.ForceRebuild3(true);
+
+                    //193 136
+                    double[] vPos = { 0, 0 };
+                    vPos[0] = ((viewCount - 1) % 5) * 0.193 + 0.096;
+                    vPos[1] = 0.82 - ((viewCount - 1) / 5) * 0.136 - 0.068;
+                    swView.Position = vPos;
+                    Console.WriteLine($"第{viewCount}个视图的坐标:x={vPos[0]};y={vPos[1]}");
+
+                    //试试outline在view 重置 body 以后是否发生了变化
+                    var outline2 = (double[])swView.GetOutline();
+                    var pos2 = (double[])swView.Position;
+                    Debug.Print("  X and Y positions = (" + pos2[0] * 1000.0 + ", " + pos2[1] * 1000.0 + ") mm");
+                    Debug.Print("  X and Y bounding box minimums = (" + outline2[0] * 1000.0 + ", " + outline2[1] * 1000.0 + ") mm");
+                    Debug.Print("  X and Y bounding box maximums = (" + outline2[2] * 1000.0 + ", " + outline2[3] * 1000.0 + ") mm");
+                    Debug.Print("  bounding box size = (" + (outline2[2] - outline2[0]) * 1000.0 + ", " + (outline2[3] - outline2[1]) * 1000.0 + ") mm");
+
+                    //把 editrebuild 注释掉 非常慢
+                    //swModel.EditRebuild3();
+
+                    #region 想反偏置 效果不好
+
+                    //判断一下新的view和旧的view比,向哪个象限发生了offset
+                    //double xBoundingBox = outline2[2] - outline[2];
+                    //double yBoundingBox = outline2[3] - outline[3];
+
+                    //if (xBoundingBox > 0 && yBoundingBox > 0)
+                    //{
+                    //    vPos[0] -= ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
+                    //    vPos[1] -= ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
+                    //}
+                    //else if (xBoundingBox > 0 && yBoundingBox < 0)
+                    //{
+                    //    vPos[0] -= ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
+                    //    vPos[1] += ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
+                    //}
+                    //else if (xBoundingBox < 0 && yBoundingBox > 0)
+                    //{
+                    //    vPos[0] += ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
+                    //    vPos[1] -= ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
+                    //}
+                    //else if (xBoundingBox < 0 && yBoundingBox < 0)
+                    //{
+                    //    vPos[0] += ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
+                    //    vPos[1] += ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
+                    //}
+
+                    //swView.Position = vPos;
+                    //swModel.EditRebuild3();
+
+                    #endregion
+
+                    //注释掉, 比较费时
+                    //AlignViewWithTheLongestEdge(swModel, swView.Name);
+                    #endregion
+
+                    drawingViewModel.SheetName = SwSheetName;
+                    drawingViewModel.ViewName = SwViewName;
                 }
             }
         }
@@ -347,6 +363,14 @@ namespace CenterOfMass_CSharp.csproj
                 swSheetName = value; RaisePropertyChanged();
             }
         }
+    }
+
+    // Define a class to represent the JSON data structure
+    public class CutListItem
+    {
+        public string Folder_Name { get; set; }
+        public string Body_Name { get; set; }
+        public string MaterialProperty { get; set; }
     }
 }
 

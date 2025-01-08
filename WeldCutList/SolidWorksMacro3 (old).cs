@@ -2,10 +2,6 @@
 using System;
 using System.Diagnostics;
 using WeldCutList;
-using System.IO;
-using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.Linq;
 
 
 //SOLIDWORKS API Help
@@ -34,30 +30,14 @@ namespace Macro1CSharp.csproj
 {
     public partial class SolidWorksMacro
     {
-        // Add a class level variable to store all cut list data
-        private List<CutListItem> allCutListData = new List<CutListItem>();
-
         ModelDoc2 swPart;
         Feature swFeat;
 
         public void Main()
         {
-            if (swApp == null)
-            {
-                Debug.Print("swApp is not initialized.");
-                System.Windows.Forms.MessageBox.Show("SolidWorks application is not initialized.");
-                return;
-            }
-
             swPart = (ModelDoc2)swApp.ActiveDoc;
 
-            if (swPart == null)
-            {
-                Debug.Print("No active document found in SolidWorks.");
-                System.Windows.Forms.MessageBox.Show("No active document found in SolidWorks.");
-                return;
-            }
-
+            //Debug.Print("File: " + swPart.GetPathName());
             string ConfigName = null;
 
             try
@@ -69,17 +49,9 @@ namespace Macro1CSharp.csproj
                 System.Windows.Forms.MessageBox.Show("solidworks当前窗口必须是一个模型!");
                 return;
             }
-
+            //Debug.Print("Active configuration name: " + ConfigName);
             swFeat = (Feature)swPart.FirstFeature();
             TraverseFeatures(swFeat, true, "Root Feature");
-
-            // After traversing all features, write the complete data to JSON
-            var distinctCutListData = allCutListData.GroupBy(item => item.Folder_Name)
-                                                  .Select(group => group.First())
-                                                  .ToList();
-
-            string jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cutlist.json");
-            File.WriteAllText(jsonFilePath, JsonConvert.SerializeObject(distinctCutListData, Formatting.Indented));
         }
         public void GetFeatureCustomProps(Feature thisFeat)
         {
@@ -213,26 +185,66 @@ namespace Macro1CSharp.csproj
                     //FeatureManager design tree, so skip it
                     return;
                 }
-
+                //else
+                //{
+                //    Debug.Print("Feature name: " + thisFeat.Name);
+                //    Debug.Print("  Feature type: " + FeatType);
+                //    vSuppressed = thisFeat.IsSuppressed2((int)swInConfigurationOpts_e.swThisConfiguration, null);
+                //    if ((vSuppressed == null))
+                //    {
+                //        Debug.Print("        Suppression failed");
+                //    }
+                //    else
+                //    {
+                //        Debug.Print("        Suppressed");
+                //    }
+                //}
+                if (!bAllFeatures)
+                {
+                    //Debug.Print("Feature name: " + thisFeat.Name);
+                    //Debug.Print("  Feature type: " + FeatType);
+                    //vSuppressed = thisFeat.IsSuppressed2((int)swInConfigurationOpts_e.swThisConfiguration, null);
+                    //if ((vSuppressed == null))
+                    //{
+                    //    Debug.Print("        Suppression failed");
+                    //}
+                    //else
+                    //{
+                    //    Debug.Print("        Suppressed");
+                    //}
+                }
+                int BodyFolderTypeE = 0;
+                BodyFolderTypeE = BodyFolder.Type;
+                //Debug.Print("        Body folder: " + static_DoTheWork_BodyFolderType[BodyFolderTypeE]);
+                //Debug.Print("        Body folder type: " + BodyFolderTypeE);
+                //Debug.Print("        Body count: " + BodyCount);
                 object[] vBodies = null;
                 vBodies = (object[])BodyFolder.GetBodies();
                 int i = 0;
 
-                if ((vBodies != null))
+                using (CutListSample01Entities cutListSample01Entities1 = new CutListSample01Entities())
                 {
-                    for (i = 0; i <= (vBodies.Length - 1); i++)
+                    if ((vBodies != null))
                     {
-                        Body2 Body = default(Body2);
-                        Body = (Body2)vBodies[i];
-                        Debug.Print("Feature name: " + thisFeat.Name);
-                        Debug.Print("          Body name: " + Body.Name);
-
-                        allCutListData.Add(new CutListItem
+                        for (i = 0; i <= (vBodies.Length - 1); i++)
                         {
-                            Folder_Name = thisFeat.Name,
-                            Body_Name = Body.Name,
-                            MaterialProperty = thisFeat.GetTypeName2(),
-                        });
+                            Body2 Body = default(Body2);
+                            Body = (Body2)vBodies[i];
+                            Debug.Print("Feature name: " + thisFeat.Name);
+                            Debug.Print("          Body name: " + Body.Name);
+
+                            CutList cutList = new CutList { Folder_Name = thisFeat.Name, Body_Name = Body.Name, MaterialProperty = thisFeat.GetTypeName2() };
+                            cutListSample01Entities1.CutLists.Add(cutList);
+
+                            try
+                            {
+                                cutListSample01Entities1.SaveChanges();
+                            }
+                            catch (System.Exception)
+                            {
+                                return;
+                            }
+                        }
                     }
                 }
             }
@@ -312,18 +324,5 @@ namespace Macro1CSharp.csproj
         ///  The SldWorks swApp variable is pre-assigned for you.
         /// </summary>
         public SldWorks swApp;
-    }
-
-    // Define a class to represent the JSON data structure
-    public class CutListItem
-    {
-        public string Folder_Name { get; set; }
-        public string Body_Name { get; set; }
-        public string MaterialProperty { get; set; }
-        // Add other necessary properties here
-        // Example:
-        // public string Property1 { get; set; }
-        // public string Property2 { get; set; }
-        // ...
     }
 }
