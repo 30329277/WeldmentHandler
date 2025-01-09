@@ -8,6 +8,7 @@ using WeldCutList.ViewModel;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
+using OfficeOpenXml;
 
 namespace WeldCutList
 {
@@ -44,13 +45,26 @@ namespace WeldCutList
                 var macro = new Macro1CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
                 macro.Main();
 
-                string jsonFilePath = "cutlist.json";
+                string excelFilePath = "cutlist.xlsx";
                 List<CutList> cutLists = new List<CutList>();
 
-                if (File.Exists(jsonFilePath))
+                if (File.Exists(excelFilePath))
                 {
-                    string json = File.ReadAllText(jsonFilePath);
-                    cutLists = JsonConvert.DeserializeObject<List<CutList>>(json) ?? new List<CutList>();
+                    using (var package = new ExcelPackage(new FileInfo(excelFilePath)))
+                    {
+                        var worksheet = package.Workbook.Worksheets[1];
+                        int rowCount = worksheet.Dimension.Rows;
+
+                        for (int row = 2; row <= rowCount; row++)
+                        {
+                            cutLists.Add(new CutList
+                            {
+                                Folder_Name = worksheet.Cells[row, 1].Value?.ToString(),
+                                Body_Name = worksheet.Cells[row, 2].Value?.ToString(),
+                                MaterialProperty = worksheet.Cells[row, 3].Value?.ToString()
+                            });
+                        }
+                    }
                 }
 
                 var query = cutLists.Select(product => new { product.Folder_Name, product.Body_Name, product.MaterialProperty });
@@ -73,13 +87,26 @@ namespace WeldCutList
         /// <param name="e"></param>
         private void Button_Click_3(object sender, RoutedEventArgs e)
         {
-            string jsonFilePath = "cutlist.json";
+            string excelFilePath = "cutlist.xlsx";
             List<CutList> cutLists = new List<CutList>();
 
-            if (File.Exists(jsonFilePath))
+            if (File.Exists(excelFilePath))
             {
-                string json = File.ReadAllText(jsonFilePath);
-                cutLists = JsonConvert.DeserializeObject<List<CutList>>(json) ?? new List<CutList>();
+                using (var package = new ExcelPackage(new FileInfo(excelFilePath)))
+                {
+                    var worksheet = package.Workbook.Worksheets[0];
+                    int rowCount = worksheet.Dimension.Rows;
+
+                    for (int row = 2; row <= rowCount; row++)
+                    {
+                        cutLists.Add(new CutList
+                        {
+                            Folder_Name = worksheet.Cells[row, 1].Value?.ToString(),
+                            Body_Name = worksheet.Cells[row, 2].Value?.ToString(),
+                            MaterialProperty = worksheet.Cells[row, 3].Value?.ToString()
+                        });
+                    }
+                }
             }
 
             var query = cutLists.Select(product => new { product.Folder_Name, product.Body_Name, product.MaterialProperty });
@@ -108,20 +135,32 @@ namespace WeldCutList
         /// copy and paste drawing sheets. 改成 view/30
         /// </summary>
         /// <param name="sender"></param>
-        /// <param="e"></param>
+        /// <param name="e"></param>
         private async void Button_Click_4(object sender, RoutedEventArgs e)
         {
             this.progressBar1.IsIndeterminate = true;
 
             await Task.Run(() =>
             {
-                string jsonFilePath = "cutlist.json";
+                string excelFilePath = "cutlist.xlsx";
                 List<CutList> cutLists = new List<CutList>();
 
-                if (File.Exists(jsonFilePath))
+                if (File.Exists(excelFilePath))
                 {
-                    string json = File.ReadAllText(jsonFilePath);
-                    cutLists = JsonConvert.DeserializeObject<List<CutList>>(json) ?? new List<CutList>();
+                    using (var package = new ExcelPackage(new FileInfo(excelFilePath)))
+                    {
+                        var worksheet = package.Workbook.Worksheets[1];
+                        int rowCount = worksheet.Dimension.Rows;
+
+                        for (int row = 2; row <= rowCount; row++)
+                        {
+                            cutLists.Add(new CutList
+                            {
+                                Folder_Name = worksheet.Cells[row, 1].Value?.ToString(),
+                                Body_Name = worksheet.Cells[row, 2].Value?.ToString()
+                            });
+                        }
+                    }
                 }
 
                 var query = cutLists.Select(product => new { product.Folder_Name, product.Body_Name });
@@ -139,7 +178,7 @@ namespace WeldCutList
         /// Traverse the drawing view
         /// </summary>
         /// <param="sender"></param>
-        /// <param="e"></param>
+        /// <param name="e"></param>
         async private void Button_Click_5(object sender, RoutedEventArgs e)
         {
             //this.btn2.IsEnabled = false;

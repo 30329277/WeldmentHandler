@@ -6,6 +6,8 @@ using System.IO;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
+using OfficeOpenXml;
+using System.Runtime.InteropServices;
 
 
 //SOLIDWORKS API Help
@@ -34,8 +36,8 @@ namespace Macro1CSharp.csproj
 {
     public partial class SolidWorksMacro
     {
-        // Add a class level variable to store all cut list data
-        private List<CutListItem> allCutListData = new List<CutListItem>();
+        // Change from CutListItem to CutList
+        private List<CutList> allCutListData = new List<CutList>();
 
         ModelDoc2 swPart;
         Feature swFeat;
@@ -73,13 +75,49 @@ namespace Macro1CSharp.csproj
             swFeat = (Feature)swPart.FirstFeature();
             TraverseFeatures(swFeat, true, "Root Feature");
 
-            // After traversing all features, write the complete data to JSON
-            var distinctCutListData = allCutListData.GroupBy(item => item.Folder_Name)
-                                                  .Select(group => group.First())
-                                                  .ToList();
+            // 保持原始遍历顺序，不需要额外排序
+            var distinctCutListData = allCutListData
+                .Where(item => !string.IsNullOrEmpty(item.Folder_Name))
+                .GroupBy(item => item.Folder_Name)
+                .Select(group => group.First())
+                .ToList();
 
-            string jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cutlist.json");
-            File.WriteAllText(jsonFilePath, JsonConvert.SerializeObject(distinctCutListData, Formatting.Indented));
+            string excelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cutlist.xlsx");
+            
+            // Remove license context code since we're using EPPlus 4.5.3.3
+            using (var package = new ExcelPackage(new FileInfo(excelPath)))
+            {
+                var workbook = package.Workbook;
+                var worksheet = workbook.Worksheets["CutList"];
+                
+                // If worksheet exists, delete it
+                if (worksheet != null)
+                {
+                    workbook.Worksheets.Delete(worksheet);
+                }
+
+                // Add new worksheet
+                worksheet = workbook.Worksheets.Add("CutList");
+
+                // Add headers
+                worksheet.Cells[1, 1].Value = "Folder_Name";
+                worksheet.Cells[1, 2].Value = "Body_Name";
+                worksheet.Cells[1, 3].Value = "MaterialProperty";
+
+                // Add data
+                for (int i = 0; i < distinctCutListData.Count; i++)
+                {
+                    worksheet.Cells[i + 2, 1].Value = distinctCutListData[i].Folder_Name;
+                    worksheet.Cells[i + 2, 2].Value = distinctCutListData[i].Body_Name;
+                    worksheet.Cells[i + 2, 3].Value = distinctCutListData[i].MaterialProperty;
+                }
+
+                // Auto-fit columns
+                worksheet.Cells.AutoFitColumns();
+
+                // Save the file
+                package.Save();
+            }
         }
         public void GetFeatureCustomProps(Feature thisFeat)
         {
@@ -227,12 +265,16 @@ namespace Macro1CSharp.csproj
                         Debug.Print("Feature name: " + thisFeat.Name);
                         Debug.Print("          Body name: " + Body.Name);
 
-                        allCutListData.Add(new CutListItem
+                        // 保持原始顺序添加到列表
+                        if (thisFeat.Name != null)
                         {
-                            Folder_Name = thisFeat.Name,
-                            Body_Name = Body.Name,
-                            MaterialProperty = thisFeat.GetTypeName2(),
-                        });
+                            allCutListData.Add(new CutList
+                            {
+                                Folder_Name = thisFeat.Name,
+                                Body_Name = Body.Name,
+                                MaterialProperty = thisFeat.GetTypeName2(),
+                            });
+                        }
                     }
                 }
             }
@@ -314,16 +356,5 @@ namespace Macro1CSharp.csproj
         public SldWorks swApp;
     }
 
-    // Define a class to represent the JSON data structure
-    public class CutListItem
-    {
-        public string Folder_Name { get; set; }
-        public string Body_Name { get; set; }
-        public string MaterialProperty { get; set; }
-        // Add other necessary properties here
-        // Example:
-        // public string Property1 { get; set; }
-        // public string Property2 { get; set; }
-        // ...
-    }
+    // Remove the CutListItem class since we're using CutList now
 }

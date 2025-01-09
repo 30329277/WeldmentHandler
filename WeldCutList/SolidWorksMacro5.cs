@@ -22,6 +22,7 @@ using WeldCutList;
 using WeldCutList.ViewModel;
 using System.IO;
 using Newtonsoft.Json;
+using OfficeOpenXml;
 
 namespace CenterOfMass_CSharp.csproj
 {
@@ -98,18 +99,42 @@ namespace CenterOfMass_CSharp.csproj
 
             #endregion
 
-            // Load JSON data from SolidWorksMacro3
-            string jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cutlist.json");
-            if (!File.Exists(jsonFilePath))
+            // Replace Excel COM reading code with EPPlus
+            string excelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cutlist.xlsx");
+            if (!File.Exists(excelPath))
             {
-                System.Windows.Forms.MessageBox.Show($"JSON file not found: {jsonFilePath}");
+                System.Windows.Forms.MessageBox.Show($"Excel file not found: {excelPath}");
                 return;
             }
 
-            string jsonData = File.ReadAllText(jsonFilePath);
-            var cutListData = JsonConvert.DeserializeObject<List<CutListItem>>(jsonData);
+            var cutListData = new List<CutList>();
+            
+            // Remove license context code since we're using EPPlus 4.5.3.3
+            using (var package = new ExcelPackage(new FileInfo(excelPath)))
+            {
+                var workbook = package.Workbook;
+                if (workbook.Worksheets.Count == 0)
+                {
+                    System.Windows.Forms.MessageBox.Show("No worksheets found in the Excel file.");
+                    return;
+                }
 
-            // Project JSON data to queryDB
+                var worksheet = workbook.Worksheets[1];
+                int rowCount = worksheet.Dimension.Rows;
+
+                // Skip header row, start from row 2
+                for (int row = 2; row <= rowCount; row++)
+                {
+                    cutListData.Add(new CutList
+                    {
+                        Folder_Name = worksheet.Cells[row, 1].Value?.ToString(),
+                        Body_Name = worksheet.Cells[row, 2].Value?.ToString(),
+                        MaterialProperty = worksheet.Cells[row, 3].Value?.ToString()
+                    });
+                }
+            }
+
+            // Project Excel data to queryDB
             var queryDB = cutListData.Select(product => new { product.Folder_Name, product.Body_Name, product.MaterialProperty });
 
             //零件设计树的body集合和 queryDB（来自与localDB）join 后投影为新的集合 resultquery
@@ -363,14 +388,6 @@ namespace CenterOfMass_CSharp.csproj
                 swSheetName = value; RaisePropertyChanged();
             }
         }
-    }
-
-    // Define a class to represent the JSON data structure
-    public class CutListItem
-    {
-        public string Folder_Name { get; set; }
-        public string Body_Name { get; set; }
-        public string MaterialProperty { get; set; }
     }
 }
 
