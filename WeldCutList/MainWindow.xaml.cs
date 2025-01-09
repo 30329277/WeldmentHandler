@@ -108,7 +108,7 @@ namespace WeldCutList
         /// copy and paste drawing sheets. 改成 view/30
         /// </summary>
         /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param="e"></param>
         private async void Button_Click_4(object sender, RoutedEventArgs e)
         {
             this.progressBar1.IsIndeterminate = true;
