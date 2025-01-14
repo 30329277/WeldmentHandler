@@ -195,5 +195,20 @@ namespace WeldCutList
             this.progressBar1.Value = 100;
         }
 
+        async private void Button_Click_6(object sender, RoutedEventArgs e)
+        {
+            //this.btn2.IsEnabled = false;
+            this.progressBar1.IsIndeterminate = true;
+
+            await Task.Run(() =>
+            {
+                var macro = new Dimensioning.csproj.SolidWorksMacro() { swApp = new SldWorks() };
+                macro.Main();
+            });
+
+            this.progressBar1.IsIndeterminate = false;
+            this.progressBar1.Value = 100;
+        }
+
     }
 }
