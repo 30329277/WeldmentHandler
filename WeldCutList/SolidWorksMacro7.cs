@@ -70,6 +70,7 @@ namespace Dimensioning.csproj
                     else
                     {
                         DimensioningTubeSide(vEdges);
+                        Remove90DegreeDimension(swView, swDrawDoc);
                     }
                 }
             }
@@ -413,7 +414,9 @@ namespace Dimensioning.csproj
 
                         double angle = Math.Acos(dotProduct / (magnitude1 * magnitude2)) * (180.0 / Math.PI);
 
-                        if (angle > 0 && angle < 90 || angle > 90 && angle < 180) // Exclude 90° and 180° angles
+                        Debug.Print("Angle between edges: " + angle);
+
+                        if ((angle > 0 && angle < 90) || (angle > 90 && angle < 180)) // Exclude 90° and 180° angles
                         {
                             // Clear selection and select the first edge again
                             swModel.ClearSelection2(true);
@@ -443,7 +446,35 @@ namespace Dimensioning.csproj
                 }
             }
         }
+        private void Remove90DegreeDimension(View view, DrawingDoc draw)
+        {
+            DisplayDimension swDispDim = view.GetFirstDisplayDimension5();
+            Sheet swSheet = view.Sheet;
 
+            if (swSheet == null)
+            {
+            swSheet = draw.Sheet[view.Name];
+            }
+
+            List<DisplayDimension> dimensions = new List<DisplayDimension>();
+            while (swDispDim != null)
+            {
+            dimensions.Add(swDispDim);
+            swDispDim = swDispDim.GetNext5();
+            }
+
+            foreach (var dim in dimensions)
+            {
+            double value = dim.GetDimension2(0).GetValue2("");
+            if (Math.Abs(value - 90.0) < 0.001) // Check if the dimension value is 90 degrees
+            {
+                Annotation annotation = (Annotation)dim.GetAnnotation();
+                Debug.Print("Deleting 90 degree dimension: " + annotation.GetName());
+                annotation.Select2(false, 0);
+                swModel.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Absorbed);
+            }
+            }
+        }
         public SldWorks swApp;
     }
 }
