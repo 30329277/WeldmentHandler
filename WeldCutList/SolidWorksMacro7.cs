@@ -60,12 +60,25 @@ namespace Dimensioning.csproj
 
                     int nCountShaded = 0;
                     int polyLineCount = swView.GetPolyLineCount5(1, out nCountShaded);
+                    Debug.Print("Polyline count: " + polyLineCount);
 
                     if (polyLineCount == 16)
                     {
                         // 这个view是方管的右左视图，执行以下的for循环逻辑
                         DimensioningTubeSection(vEdges);
                         RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
+                    }
+                    else if (polyLineCount == 28)
+                    {
+                        CreateBrokenOutView(swView,swDrawDoc );
+                        // Re-check polyline count after creating broken out view
+                        int newCountShaded = 0;
+                        int newPolyLineCount = swView.GetPolyLineCount5(1, out newCountShaded);
+                        if (newPolyLineCount == 16)
+                        {
+                            DimensioningTubeSection(vEdges);
+                            RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
+                        }
                     }
                     else
                     {
@@ -306,7 +319,7 @@ namespace Dimensioning.csproj
                 if (!isKeeping)
                 {
                     Annotation annotation = (Annotation)dim.GetAnnotation();
-                    Debug.Print("Deleting dimension: " + annotation.GetName());
+                    // Debug.Print("Deleting dimension: " + annotation.GetName());
                     annotation.Select2(false, 0);
                     swModel.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Absorbed);
                 }
@@ -414,7 +427,7 @@ namespace Dimensioning.csproj
 
                         double angle = Math.Acos(dotProduct / (magnitude1 * magnitude2)) * (180.0 / Math.PI);
 
-                        Debug.Print("Angle between edges: " + angle);
+                        // Debug.Print("Angle between edges: " + angle);
 
                         if ((angle > 0 && angle < 90) || (angle > 90 && angle < 180)) // Exclude 90° and 180° angles
                         {
@@ -469,12 +482,36 @@ namespace Dimensioning.csproj
             if (Math.Abs(value - 90.0) < 0.001) // Check if the dimension value is 90 degrees
             {
                 Annotation annotation = (Annotation)dim.GetAnnotation();
-                Debug.Print("Deleting 90 degree dimension: " + annotation.GetName());
+                // Debug.Print("Deleting 90 degree dimension: " + annotation.GetName());
                 annotation.Select2(false, 0);
                 swModel.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Absorbed);
             }
             }
         }
+        private void CreateBrokenOutView(View swView, DrawingDoc swDrawDoc)
+        {
+            double[] vOutline = (double[])swView.GetOutline();
+
+            // Use view outline coordinates directly since they are already in sheet space
+            double startX = vOutline[0];
+            double startY = vOutline[1];
+            double endX = vOutline[2];
+            double endY = vOutline[3];
+
+            // Print outline dimensions
+            double width = Math.Abs(endX - startX);
+            double height = Math.Abs(endY - startY);
+            Debug.Print($"Outline width: {width:F3}, height: {height:F3}");
+
+            // Print rectangle dimensions that will be created
+            Debug.Print($"Rectangle width: {Math.Abs(endX - startX):F3}, height: {Math.Abs(endY - startY):F3}");
+
+            // Create the corner rectangle using the outline coordinates
+            swModel.SketchManager.CreateCornerRectangle(startX, startY, 0, endX, endY, 0);
+            // Create broken-out section
+            swDrawDoc.CreateBreakOutSection(0.2); // 200mm depth
+        }
+
         public SldWorks swApp;
     }
 }
