@@ -1,14 +1,10 @@
-﻿using Microsoft.VisualBasic;
+﻿using SolidWorks.Interop.sldworks;
+using SolidWorks.Interop.swconst;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using SolidWorks.Interop.sldworks;
-using SolidWorks.Interop.swconst;
-using System.Runtime.InteropServices;
 using System.Linq;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 namespace Dimensioning.csproj
 {
     partial class SolidWorksMacro
@@ -68,9 +64,9 @@ namespace Dimensioning.csproj
                         DimensioningTubeSection(vEdges);
                         RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
                     }
-                    else if (polyLineCount == 28 || polyLineCount == 30)
+                    /*else if (polyLineCount == 28 || polyLineCount == 30)
                     {
-                        CreateBrokenOutView(swView,swDrawDoc );
+                        // CreateBrokenOutView(swView, swDrawDoc);
                         // Re-check polyline count after creating broken out view
                         int newCountShaded = 0;
                         int newPolyLineCount = swView.GetPolyLineCount5(1, out newCountShaded);
@@ -79,29 +75,29 @@ namespace Dimensioning.csproj
                             DimensioningTubeSection(vEdges);
                             RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
                         }
-                    }
+                    }*/
                     else
                     {
                         DimensioningTubeSide(vEdges);
                         Remove90DegreeDimension(swView, swDrawDoc);
                     }
+                    RelocateDimension(swView);
                 }
             }
 
             // Save the drawing
-        /*    int errors = 0;
-            int warnings = 0;
-            bool saveStatus = swModel.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
-            if (!saveStatus)
-            {
-                Debug.Print("Failed to save the drawing. Errors: " + errors + ", Warnings: " + warnings);
-            }
-            else
-            {
-                Debug.Print("Drawing saved successfully.");
-            }*/
+            /*    int errors = 0;
+                int warnings = 0;
+                bool saveStatus = swModel.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+                if (!saveStatus)
+                {
+                    Debug.Print("Failed to save the drawing. Errors: " + errors + ", Warnings: " + warnings);
+                }
+                else
+                {
+                    Debug.Print("Drawing saved successfully.");
+                }*/
         }
-
         private void DimensioningTubeSection(object[] vEdges)
         {
             for (int i = 0; i <= vEdges.GetUpperBound(0); i++)
@@ -159,7 +155,7 @@ namespace Dimensioning.csproj
 
                         if (lineParams2 != null)
                         {
-                            bool areParallel = 
+                            bool areParallel =
                             Math.Round(Math.Abs(vLineParam[3]), 2) == Math.Round(Math.Abs(lineParams2[3]), 2) &&
                             Math.Round(Math.Abs(vLineParam[4]), 2) == Math.Round(Math.Abs(lineParams2[4]), 2) &&
                             Math.Round(Math.Abs(vLineParam[5]), 2) == Math.Round(Math.Abs(lineParams2[5]), 2);
@@ -179,7 +175,7 @@ namespace Dimensioning.csproj
                                 double nZoffset = ((double[])curveParams3.EndPoint)[2] - ((double[])curveParams3.StartPoint)[2];
 
                                 //先把nOffset设置为0
-                                double nOffset = Math.Sqrt(Math.Pow(nXoffset, 2) + Math.Pow(nYoffset, 2) + Math.Pow(nZoffset, 2))*0;
+                                double nOffset = Math.Sqrt(Math.Pow(nXoffset, 2) + Math.Pow(nYoffset, 2) + Math.Pow(nZoffset, 2)) * 0;
                                 // Debug.Print("nOffset (暂时设置为0)= " + nOffset);
 
                                 double[] vOutline = (double[])swView.GetOutline();
@@ -209,7 +205,7 @@ namespace Dimensioning.csproj
                             {
                                 // Debug.Print("不平行或者不相等");
                             }
-                            }
+                        }
                         else
                         {
                             // Debug.Print("不是直线");
@@ -266,7 +262,7 @@ namespace Dimensioning.csproj
 
             double maxValue = uniqueValues[uniqueValues.Count - 1];
             double minValue = uniqueValues[0];
-            
+
             // 计算真正的中间值：找到最接近 (maxValue + minValue) / 2 的值
             double targetMidValue = (maxValue + minValue) / 2;
             double midValue = uniqueValues
@@ -466,64 +462,114 @@ namespace Dimensioning.csproj
 
             if (swSheet == null)
             {
-            swSheet = draw.Sheet[view.Name];
+                swSheet = draw.Sheet[view.Name];
             }
 
             List<DisplayDimension> dimensions = new List<DisplayDimension>();
             while (swDispDim != null)
             {
-            dimensions.Add(swDispDim);
-            swDispDim = swDispDim.GetNext5();
+                dimensions.Add(swDispDim);
+                swDispDim = swDispDim.GetNext5();
             }
 
             foreach (var dim in dimensions)
             {
-            double value = dim.GetDimension2(0).GetValue2("");
-            if (Math.Abs(value - 90.0) < 0.001) // Check if the dimension value is 90 degrees
-            {
-                Annotation annotation = (Annotation)dim.GetAnnotation();
-                // Debug.Print("Deleting 90 degree dimension: " + annotation.GetName());
-                annotation.Select2(false, 0);
-                swModel.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Absorbed);
-            }
+                double value = dim.GetDimension2(0).GetValue2("");
+                if (Math.Abs(value - 90.0) < 0.001) // Check if the dimension value is 90 degrees
+                {
+                    Annotation annotation = (Annotation)dim.GetAnnotation();
+                    // Debug.Print("Deleting 90 degree dimension: " + annotation.GetName());
+                    annotation.Select2(false, 0);
+                    swModel.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Absorbed);
+                }
             }
         }
         private void CreateBrokenOutView(View swView, DrawingDoc swDrawDoc)
         {
-        double[] vOutline = (double[])swView.GetOutline();
-        double[] vPosition = (double[])swView.Position;
+            double[] vOutline = (double[])swView.GetOutline();
+            double[] vPosition = (double[])swView.Position;
 
-        // Use view outline coordinates directly since they are already in sheet space
-        double startX = vOutline[0] + vPosition[0];
-        double startY = vOutline[1] + vPosition[1];
-        double endX = vOutline[2] + vPosition[0];
-        double endY = vOutline[3] + vPosition[1];
+            // Use view outline coordinates directly since they are already in sheet space
+            double startX = vOutline[0] + vPosition[0];
+            double startY = vOutline[1] + vPosition[1];
+            double endX = vOutline[2] + vPosition[0];
+            double endY = vOutline[3] + vPosition[1];
 
-        // Print vOutline and ModelToViewTransform
-        Debug.Print("vOutline: " + string.Join(", ", vOutline));
-        MathTransform modelToViewTransform = swView.ModelToViewTransform;
-        if (modelToViewTransform != null)
+            // Print vOutline and ModelToViewTransform
+            Debug.Print("vOutline: " + string.Join(", ", vOutline));
+            MathTransform modelToViewTransform = swView.ModelToViewTransform;
+            if (modelToViewTransform != null)
+            {
+                double[] transformArray = (double[])modelToViewTransform.ArrayData;
+                Debug.Print("ModelToViewTransform: " + string.Join(", ", transformArray));
+            }
+            else
+            {
+                Debug.Print("ModelToViewTransform is null.");
+            }
+            // Print outline dimensions
+            double width = Math.Abs(endX - startX);
+            double height = Math.Abs(endY - startY);
+
+            // Print rectangle dimensions that will be created
+            Debug.Print($"Rectangle width: {Math.Abs(endX - startX):F3}, height: {Math.Abs(endY - startY):F3}");
+
+            // Create the corner rectangle using the outline coordinates
+            swModel.SketchManager.CreateCornerRectangle(startX, startY, 0, endX, endY, 0);
+            // Create broken-out section
+            swDrawDoc.CreateBreakOutSection(0.2); // 200mm depth
+        }
+        private void RelocateDimension(View view)
         {
-            double[] transformArray = (double[])modelToViewTransform.ArrayData;
-            Debug.Print("ModelToViewTransform: " + string.Join(", ", transformArray));
-        }
-        else
-        {
-            Debug.Print("ModelToViewTransform is null.");
-        }
-        // Print outline dimensions
-        double width = Math.Abs(endX - startX);
-        double height = Math.Abs(endY - startY);
+            DisplayDimension currentDim = view.GetFirstDisplayDimension5();
+            List<DisplayDimension> dimensions = new List<DisplayDimension>();
 
-        // Print rectangle dimensions that will be created
-        Debug.Print($"Rectangle width: {Math.Abs(endX - startX):F3}, height: {Math.Abs(endY - startY):F3}");
+            // Collect all dimensions
+            while (currentDim != null)
+            {
+                dimensions.Add(currentDim);
+                currentDim = currentDim.GetNext5();
+            }
 
-        // Create the corner rectangle using the outline coordinates
-        swModel.SketchManager.CreateCornerRectangle(startX, startY, 0, endX, endY, 0);
-        // Create broken-out section
-        swDrawDoc.CreateBreakOutSection(0.2); // 200mm depth
+            // Sort dimensions by vertical position
+            dimensions.Sort((a, b) => 
+            {
+                double[] posA = (double[])((Annotation)a.GetAnnotation()).GetPosition();
+                double[] posB = (double[])((Annotation)b.GetAnnotation()).GetPosition();
+                return posA[1].CompareTo(posB[1]);
+            });
+
+            const double minVerticalGap = 0.015; // Minimum vertical gap between dimensions
+            
+            double[] vOutline = (double[])view.GetOutline();
+            double viewCenterX = (vOutline[0] + vOutline[2]) / 2.0;
+            double viewWidth = Math.Abs(vOutline[2] - vOutline[0]);
+
+            // Adjust positions to distribute dimensions around the view
+            for (int i = 0; i < dimensions.Count; i++)
+            {
+                Annotation currentAnnotation = (Annotation)dimensions[i].GetAnnotation();
+                double[] currentPos = (double[])currentAnnotation.GetPosition();
+
+                // Calculate new position based on index
+                if (i % 2 == 0)
+                {
+                    // Even indices - place on left side
+                    currentPos[0] = vOutline[0] - viewWidth * 0.2;
+                }
+                else
+                {
+                    // Odd indices - place on right side
+                    currentPos[0] = vOutline[2] + viewWidth * 0.2;
+                }
+
+                // Adjust vertical position with consistent spacing
+                currentPos[1] = vOutline[3] - (i * minVerticalGap);
+                
+                // Apply new position
+                currentAnnotation.SetPosition2(currentPos[0], currentPos[1], currentPos[2]);
+            }
         }
-
         public SldWorks swApp;
     }
 }
