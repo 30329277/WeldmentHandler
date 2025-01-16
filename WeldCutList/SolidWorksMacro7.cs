@@ -36,6 +36,17 @@ namespace Dimensioning.csproj
             viewCount = swDrawDoc.GetViewCount();
             ss = (object[])swDrawDoc.GetViews();
 
+            // 添加循环设置所有视图的切线为隐藏
+            for (int i = ss.GetLowerBound(0); i <= ss.GetUpperBound(0); i++)
+            {
+                object[] views = (object[])ss[i];
+                for (int j = 1; j <= views.GetUpperBound(0); j++)
+                {
+                    View view = (View)views[j];
+                    view.SetDisplayTangentEdges2((int)swDisplayTangentEdges_e.swTangentEdgesHidden);
+                }
+            }
+
             for (sheetCount = ss.GetLowerBound(0); sheetCount <= ss.GetUpperBound(0); sheetCount++)
             {
                 vv = (object[])ss[sheetCount];
