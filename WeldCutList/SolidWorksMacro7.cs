@@ -68,7 +68,7 @@ namespace Dimensioning.csproj
                         DimensioningTubeSection(vEdges);
                         RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
                     }
-                    else if (polyLineCount == 28)
+                    else if (polyLineCount == 28 || polyLineCount == 30)
                     {
                         CreateBrokenOutView(swView,swDrawDoc );
                         // Re-check polyline count after creating broken out view
@@ -89,7 +89,7 @@ namespace Dimensioning.csproj
             }
 
             // Save the drawing
-            int errors = 0;
+        /*    int errors = 0;
             int warnings = 0;
             bool saveStatus = swModel.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
             if (!saveStatus)
@@ -99,7 +99,7 @@ namespace Dimensioning.csproj
             else
             {
                 Debug.Print("Drawing saved successfully.");
-            }
+            }*/
         }
 
         private void DimensioningTubeSection(object[] vEdges)
@@ -490,26 +490,38 @@ namespace Dimensioning.csproj
         }
         private void CreateBrokenOutView(View swView, DrawingDoc swDrawDoc)
         {
-            double[] vOutline = (double[])swView.GetOutline();
+        double[] vOutline = (double[])swView.GetOutline();
+        double[] vPosition = (double[])swView.Position;
 
-            // Use view outline coordinates directly since they are already in sheet space
-            double startX = vOutline[0];
-            double startY = vOutline[1];
-            double endX = vOutline[2];
-            double endY = vOutline[3];
+        // Use view outline coordinates directly since they are already in sheet space
+        double startX = vOutline[0] + vPosition[0];
+        double startY = vOutline[1] + vPosition[1];
+        double endX = vOutline[2] + vPosition[0];
+        double endY = vOutline[3] + vPosition[1];
 
-            // Print outline dimensions
-            double width = Math.Abs(endX - startX);
-            double height = Math.Abs(endY - startY);
-            Debug.Print($"Outline width: {width:F3}, height: {height:F3}");
+        // Print vOutline and ModelToViewTransform
+        Debug.Print("vOutline: " + string.Join(", ", vOutline));
+        MathTransform modelToViewTransform = swView.ModelToViewTransform;
+        if (modelToViewTransform != null)
+        {
+            double[] transformArray = (double[])modelToViewTransform.ArrayData;
+            Debug.Print("ModelToViewTransform: " + string.Join(", ", transformArray));
+        }
+        else
+        {
+            Debug.Print("ModelToViewTransform is null.");
+        }
+        // Print outline dimensions
+        double width = Math.Abs(endX - startX);
+        double height = Math.Abs(endY - startY);
 
-            // Print rectangle dimensions that will be created
-            Debug.Print($"Rectangle width: {Math.Abs(endX - startX):F3}, height: {Math.Abs(endY - startY):F3}");
+        // Print rectangle dimensions that will be created
+        Debug.Print($"Rectangle width: {Math.Abs(endX - startX):F3}, height: {Math.Abs(endY - startY):F3}");
 
-            // Create the corner rectangle using the outline coordinates
-            swModel.SketchManager.CreateCornerRectangle(startX, startY, 0, endX, endY, 0);
-            // Create broken-out section
-            swDrawDoc.CreateBreakOutSection(0.2); // 200mm depth
+        // Create the corner rectangle using the outline coordinates
+        swModel.SketchManager.CreateCornerRectangle(startX, startY, 0, endX, endY, 0);
+        // Create broken-out section
+        swDrawDoc.CreateBreakOutSection(0.2); // 200mm depth
         }
 
         public SldWorks swApp;
