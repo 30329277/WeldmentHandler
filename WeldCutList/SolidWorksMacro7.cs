@@ -94,6 +94,7 @@ namespace Dimensioning.csproj
                         DimensioningTubeSide(vEdges);
                         Remove90And180DegreeDimensions(swView, swDrawDoc);
                     }
+                    swModel.Extension.AlignDimensions((int)swAlignDimensionType_e.swAlignDimensionType_AutoArrange, 0.06);
                 }
             }
 
@@ -471,59 +472,61 @@ namespace Dimensioning.csproj
         }
         private void CreateBrokenOutView(View swView, DrawingDoc swDrawDoc)
         {
-            double[] vOutline = (double[])swView.GetOutline();
-            double[] vPosition = (double[])swView.Position;
-
-            // Use view outline coordinates directly since they are already in sheet space
-            double startX = vOutline[0] + vPosition[0];
-            double startY = vOutline[1] + vPosition[1];
-            double endX = vOutline[2] + vPosition[0];
-            double endY = vOutline[3] + vPosition[1];
-
-            // Print vOutline and ModelToViewTransform
-            Debug.Print("vOutline: " + string.Join(", ", vOutline.Select(v => Math.Round(v * 1000, 2))));
-            MathTransform modelToViewTransform = swView.ModelToViewTransform;
-            if (modelToViewTransform != null)
+            try
             {
-                double[] transformArray = (double[])modelToViewTransform.ArrayData;
-                Debug.Print("ModelToViewTransform: " + string.Join(", ", transformArray));
+                // Get math utility and create transform
+                MathUtility swMathUtil = (MathUtility)swApp.GetMathUtility();
+
+                // Create up vector (0,1,0)
+                double[] vectorData = new double[] { 0, 1, 0 };
+                MathVector swMathVect = (MathVector)swMathUtil.CreateVector(vectorData);
+
+                // Get view transform and normalize
+                MathTransform swTransform = (MathTransform)swView.ModelToViewTransform;
+                swMathVect = (MathVector)swMathVect.MultiplyTransform(swTransform);
+                swMathVect = (MathVector)swMathVect.Normalise();
+
+                // Convert vPts to double array
+                double[] vPtsArray = (double[])swMathVect.ArrayData;
+
+                // Get sheet properties for scaling
+                Sheet swSheet = swView.Sheet;
+                double[] sheetProps = (double[])swSheet.GetProperties();
+                double sheetScale = sheetProps[3];
+
+                // Get view center coordinates
+                /*double[] viewOutline = (double[])swView.GetOutline();
+                double centerX = (viewOutline[0] + viewOutline[2]) / 2.0;
+                double centerY = (viewOutline[1] + viewOutline[3]) / 2.0;*/
+
+
+                double centerX = sheetScale * (vPtsArray[0]);
+                double centerY = sheetScale * (vPtsArray[1]);
+
+                // Clear selection and select view
+                swModel.ClearSelection2(true);
+                //swModel.Extension.SelectByID2(swView.GetName2(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+
+                // Create circle sketch for broken-out section
+                double radius = 0.025 * sheetScale; // Scale the radius based on sheet scale
+
+                double[] viewPosition = (double[])swView.Position;
+                swModel.SketchManager.CreateCircleByRadius(sheetScale * viewPosition[0], sheetScale * viewPosition[1], 0, radius);
+
+                // Create broken-out section with scaled depth
+                double depth = 0.2; // Scale the depth based on sheet scale
+                swDrawDoc.CreateBreakOutSection(depth);
+
+                Debug.Print($"Sheet Scale: {sheetScale}");
+                Debug.Print($"View Center: X={centerX}, Y={centerY}");
+                Debug.Print($"Circle Radius: {radius}");
+                Debug.Print($"Break Out Depth: {depth}");
             }
-            else
+            catch (Exception ex)
             {
-                Debug.Print("ModelToViewTransform is null.");
+                Debug.Print($"Error creating broken-out view: {ex.Message}");
+                swModel.ClearSelection2(true);
             }
-            // Print outline dimensions
-            double width = Math.Abs(endX - startX);
-            double height = Math.Abs(endY - startY);
-
-            // Print rectangle dimensions that will be created
-            Debug.Print($"Rectangle width: {Math.Abs(endX - startX) * 1000:F2} mm, height: {Math.Abs(endY - startY) * 1000:F2} mm");
-            // Calculate the center of the view in sheet space
-            double centerX = (startX + endX) / 2;
-            double centerY = (startY + endY) / 2;
-
-            // Get the transformation matrix for the view
-            MathTransform swViewXform = (MathTransform)swView.ModelToViewTransform;
-
-            // Get the position of the view in sheet space
-            double[] viewPosition = (double[])swView.Position;
-
-            // Get the scale of the view
-            double scale = swView.ScaleDecimal;
-            
-            // Calculate the relative position of the view on the sheet considering the scale
-            double relativeX = (viewPosition[0] + (vOutline[0] + vOutline[2]) / 2) /2/scale;
-            double relativeY = (viewPosition[1] + (vOutline[1] + vOutline[3]) / 2) /2/ scale;
-
-
-            // Print the relative position
-            Debug.Print($"Relative Position: X = {relativeX}, Y = {relativeY}");
-
-            swModel.SketchManager.CreateCircleByRadius(relativeX, relativeY, 0, 0.250);
-            //swModel.SketchManager.CreateCircleByRadius(0, 0, 0, 0.250);
-
-            // Create broken-out section
-            swDrawDoc.CreateBreakOutSection(0.2); // 200mm depth
         }
         private void RelocateDimension(View view)
         {

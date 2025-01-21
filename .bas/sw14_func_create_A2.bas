@@ -1,9 +1,9 @@
 Attribute VB_Name = "sw14_func_create_A2"
     
-'工程图模板所在路径
+'锟斤拷锟斤拷图模锟斤拷锟斤拷锟斤拷路锟斤拷
 Const strFormatePath As String = _
 "C:\ProgramData\SOLIDWORKS\SOLIDWORKS 2019\lang\english\sheetformat\A2.drwdot"
-'BOM的模板
+'BOM锟斤拷模锟斤拷
 Const strBOMTemplatePath As String = _
 "C:\Program Files\SOLIDWORKS Corp\SOLIDWORKS\lang\english\bom-standard.sldbomtbt"
 
@@ -45,23 +45,10 @@ Public Function Create_Drawings(strModelPath As String)
     vSheetNames = swDraw.GetSheetNames
     swDraw.ActivateSheet vSheetNames(0)
     
-    'Add iso view of assy on first sheet######### 注释掉
+    'Add iso view of assy on first sheet######### 注锟酵碉拷
     Dim swView As SldWorks.View
     Dim swIsoView As SldWorks.View
     Set swView = swDraw.CreateDrawViewFromModelView3(strModelPath, "*Isometric", 0.5, 0.3, 0)
-'    Set swIsoView = swView
-'    swDraw.ViewDisplayShaded
-    
-    'Change view scale 这里可以修改也可以不修改，用自动比例比较好
-'    Dim dblScale(1) As Double
-'    dblScale(0) = 1
-'    dblScale(1) = 2
-'    swView.ScaleRatio = dblScale
-    
-    'Activate the second sheet 这里注释掉会有错误
-'    swDraw.ActivateSheet vSheetNames(1)
-
-    '停顿2s
     Application.Wait Now() + VBA.TimeValue("00:00:02")
     
     'Add standard three-view
@@ -92,9 +79,7 @@ Public Function Create_Drawings(strModelPath As String)
         While Not swDispDim Is Nothing
             swModel.Extension.SelectByID2 swDispDim.GetNameForSelection, _
                 "DIMENSION", 0, 0, 0, True, 0, Nothing, 0
-'            Set swDispData = swDispDim.GetDisplayData ' for pick up the dimension with "°" and delete
             Set swDispDim = swDispDim.GetNext5
-'            If InStr(1, swDispData.GetTextAtIndex(0), "°") <> 0 Then swModel.EditDelete ' for pick up the dimension with "°" and delete
         Wend
     Next i
     
@@ -104,49 +89,14 @@ Public Function Create_Drawings(strModelPath As String)
     'Activate first sheet
     swDraw.ActivateSheet vSheetNames(0)
     
-    'Autoballoon######### 注释掉
+    'Autoballoon######### 注锟酵碉拷
     Dim swFeat As SldWorks.Feature
-'    Set swFeat = swDraw.FeatureByName(swIsoView.Name)
-'    swFeat.Select2 False, 0
     Dim vNotes As Variant
-'    vNotes = swDraw.AutoBalloon4(swDetailingBalloonLayout_Right, _
-'    True, swBS_Circular, 2, 1, Empty, 1, Empty, "-None-", True)
     
-    'Move balloons to better position######### 注释掉
     Dim swNote As SldWorks.Note
     Dim swAnn As SldWorks.Annotation
     Dim vPos As Variant
-'    For i = 0 To UBound(vNotes)
-'        Set swNote = vNotes(i)
-'        Set swAnn = swNote.GetAnnotation
-'        vPos = swAnn.GetPosition
-'        swAnn.SetPosition vPos(0), vPos(1) - 0.07, 0
-'    Next i
-    
-    'Add BOM to first sheet######### 注释掉
-    Dim swBOMAnn As SldWorks.BomTableAnnotation
-'    Set swBOMAnn = swIsoView.InsertBomTable3 _
-'            (False, 0.27, 0.20808, swBOMConfigurationAnchor_TopRight, _
-'            swBomType_PartsOnly, "Default", strBOMTemplatePath, False)
-'    Set swBOMAnn = swIsoView.InsertBomTable3(False, 0.27 * 2.1, 0.20808 * 1.8, 2, 1, "DEFAULT", strBOMTemplatePath, False)
-                                
-    'Change BOM column to reference Part No custom property######### 注释掉
-'    swBOMAnn.SetColumnCustomProperty 2, "PartNo"
-    
-    'Change BOM column name and column widths######### 注释掉
-    Dim swTableAnn As SldWorks.TableAnnotation
-'    Set swTableAnn = swBOMAnn
-'    swTableAnn.Text(0, 2) = "PART NO"
-'    swTableAnn.SetColumnWidth 1, 0.04, swTableRowColChange_TableSizeCanChange
-'    swTableAnn.SetColumnWidth 2, 0.03, swTableRowColChange_TableSizeCanChange
-    
 
-    
-    '########### LESSON 6.2 ############
-    
-    'Reactivate second sheet 这里注释掉会有错误
-'    swDraw.ActivateSheet vSheetNames(1)
-    
     'Determine which view is top view
     Dim swMathUtil As SldWorks.MathUtility
     Dim swTransform As SldWorks.MathTransform
@@ -178,7 +128,7 @@ Public Function Create_Drawings(strModelPath As String)
     Dim vSheetsProps As Variant
     vSheetsProps = swSheet.GetProperties
     
-    '停顿2s
+    '停锟斤拷2s
     Application.Wait Now() + VBA.TimeValue("00:00:02")
     
     'Create line+/-100mm in the X from view center
@@ -264,13 +214,9 @@ Public Function Create_Drawings(strModelPath As String)
     Set swFinalFace(0) = Nothing
     Set swFinalFace(1) = Nothing
 
-    'Add dimension 增加一个clear selection
+    'Add dimension 锟斤拷锟斤拷一锟斤拷clear selection
     swModel.AddDimension2 0.2, 0.165, 0
     swModel.ClearSelection2 True
-
-    '####msgbox
-'    If MsgBox("工程图是否修改好,另存为pdf?", vbOKOnly) <> vbOK Then End
-    '####msgbox
     
     'Save drawing to the same location as model
     Dim strFilePath As String
@@ -280,7 +226,6 @@ Public Function Create_Drawings(strModelPath As String)
     strFilePath = Replace(strModelPath, "SLDPRT", "PDF", , , vbTextCompare)
     swModel.Extension.SaveAs strFilePath, 0, 0, Nothing, Empty, Empty
     
-    '增加这行代码,关闭已经另存为pdf的slddrw文件, 否则会因为同时打开的文件太多导致资源不足
     swApp.CloseDoc swModel.GetTitle
   
 End Function
