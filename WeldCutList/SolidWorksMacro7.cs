@@ -80,7 +80,7 @@ namespace Dimensioning.csproj
                     {
                         //先空着
                     }
-                    else if (vEdges.Any(edge => edge is Edge && ((Edge)edge).GetCurveParams3().CurveType == 3002))
+                    else if (vEdges.Any(edge => ((Edge)edge).GetCurveParams3().CurveType == 3002))
                     {
                         // 满足条件的代码逻辑
                         DimensioningHoles2(swView);
@@ -248,17 +248,8 @@ namespace Dimensioning.csproj
             // 计算真正的中间值：找到最接近 (maxValue + minValue) / 2 的值
             double targetMidValue = (maxValue + minValue) / 2;
             double midValue = uniqueValues
-            .Where(v => v % 10 == 0)
             .OrderBy(v => Math.Abs(v - targetMidValue))
-            .FirstOrDefault();
-
-            // If no multiples of 10 are found, fall back to the closest value
-            if (midValue == 0)
-            {
-                midValue = uniqueValues
-                .OrderBy(v => Math.Abs(v - targetMidValue))
-                .First();
-            }
+            .First();
 
             // Process dimensions based on case
             bool isKeeping;
@@ -321,7 +312,7 @@ namespace Dimensioning.csproj
             // First pass: find the largest edges
             for (int i = 0; i <= vEdges.GetUpperBound(0); i++)
             {
-                if (vEdges[i] is Edge edge)
+                if (vEdges[i] is Edge swEdge)
                 {
                     // Proceed with the rest of the logic
                 }
@@ -330,6 +321,7 @@ namespace Dimensioning.csproj
                     // Handle the case where the object is not an Edge
                     continue;
                 }
+                swEdge = (Edge)vEdges[i];
                 Curve swCurve = (Curve)swEdge.GetCurve();
                 CurveParamData swCurveParaData = (CurveParamData)swEdge.GetCurveParams3();
 
@@ -591,8 +583,7 @@ namespace Dimensioning.csproj
                 // Process circles
                 foreach (object edgeObj in vEdges)
                 {
-                    Edge edge = edgeObj as Edge;
-                    if (edge == null) continue;
+                    Edge edge = (Edge)edgeObj;
                     Curve curve = (Curve)edge.GetCurve();
                     CurveParamData curveData = edge.GetCurveParams3();
 
@@ -651,8 +642,7 @@ namespace Dimensioning.csproj
             // Find the edge closest to bottom-left corner
             foreach (object edgeObj in vEdges)
             {
-                Edge edge = edgeObj as Edge;
-                if (edge == null) continue;
+                Edge edge = (Edge)edgeObj;
                 Curve curve = (Curve)edge.GetCurve();
                 double[] lineParams = curve.LineParams as double[];
 
