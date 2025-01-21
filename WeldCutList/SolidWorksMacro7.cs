@@ -245,11 +245,13 @@ namespace Dimensioning.csproj
             double maxValue = uniqueValues[uniqueValues.Count - 1];
             double minValue = uniqueValues[0];
 
-            // 计算真正的中间值：找到最接近 (maxValue + minValue) / 2 的值
+            // 计算真正的中间值：找到最接近 (maxValue + minValue) / 2 的值，并且优先选择 10 的倍数
             double targetMidValue = (maxValue + minValue) / 2;
             double midValue = uniqueValues
-            .OrderBy(v => Math.Abs(v - targetMidValue))
-            .First();
+                .Where(v => v % 10 == 0)
+                .OrderBy(v => Math.Abs(v - targetMidValue))
+                .DefaultIfEmpty(uniqueValues.OrderBy(v => Math.Abs(v - targetMidValue)).First())
+                .First();
 
             // Process dimensions based on case
             bool isKeeping;
