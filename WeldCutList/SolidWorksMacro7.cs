@@ -79,6 +79,7 @@ namespace Dimensioning.csproj
                              Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 60.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(60.0 / 100.0, 2) && polyLineCount >= 16)
                     {
                         //先空着
+                        CreateBrokenOutView(swView, swDrawDoc);
                     }
                     else if (vEdges.Any(edge => ((Edge)edge).GetCurveParams3().CurveType == 3002))
                     {
@@ -480,7 +481,7 @@ namespace Dimensioning.csproj
             double endY = vOutline[3] + vPosition[1];
 
             // Print vOutline and ModelToViewTransform
-            Debug.Print("vOutline: " + string.Join(", ", vOutline));
+            Debug.Print("vOutline: " + string.Join(", ", vOutline.Select(v => Math.Round(v * 1000, 2))));
             MathTransform modelToViewTransform = swView.ModelToViewTransform;
             if (modelToViewTransform != null)
             {
@@ -496,10 +497,19 @@ namespace Dimensioning.csproj
             double height = Math.Abs(endY - startY);
 
             // Print rectangle dimensions that will be created
-            Debug.Print($"Rectangle width: {Math.Abs(endX - startX):F2}, height: {Math.Abs(endY - startY):F2}");
+            Debug.Print($"Rectangle width: {Math.Abs(endX - startX) * 1000:F2} mm, height: {Math.Abs(endY - startY) * 1000:F2} mm");
+            // Calculate the center of the view in sheet space
+            double centerX = (startX + endX) / 2;
+            double centerY = (startY + endY) / 2;
 
-            // Create the corner rectangle using the outline coordinates
-            swModel.SketchManager.CreateCornerRectangle(startX, startY, 0, endX, endY, 0);
+            // Print the center coordinates
+            Debug.Print($"Circle Center: X = {centerX}, Y = {centerY}");
+
+            // Select the current view
+            swModel.SketchManager.CreateCircleByRadius(centerX, centerY, 0, 0.250);
+            // Select the current view
+            swModel.SketchManager.CreateCircleByRadius(0, 0, 0, 0.250);
+            
             // Create broken-out section
             swDrawDoc.CreateBreakOutSection(0.2); // 200mm depth
         }
@@ -887,7 +897,7 @@ namespace Dimensioning.csproj
                                 swView.SelectEntity(edge, true);
                                 // DisplayDimension swDispDim = (DisplayDimension)swModel.AddHorizontalDimension2(outlineBounds[3], paperCenterY,  0);
                                 //DisplayDimension swDispDim = (DisplayDimension)swModel.AddHorizontalDimension2(outlineBounds[3], 0.3 + paperCenterX / 5, 0);
-                                DisplayDimension swDispDim = (DisplayDimension)swModel.AddHorizontalDimension2(paperCenterX, paperCenterY, 0);
+                                DisplayDimension swDispDim = (DisplayDimension)swModel.AddHorizontalDimension2(viewCenterX, viewCenterY, 0);
 
                                 if (swDispDim != null)
                                 {
