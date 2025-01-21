@@ -58,30 +58,41 @@ namespace Dimensioning.csproj
                     int polyLineCount = swView.GetPolyLineCount5(1, out nCountShaded);
                     Debug.Print("Polyline count: " + polyLineCount);
 
+                    double[] viewOutline = (double[])swView.GetOutline();
+                    double viewWidth = Math.Abs(viewOutline[2] - viewOutline[0]);
+                    double viewHeight = Math.Abs(viewOutline[3] - viewOutline[1]);
+                    Debug.Print("View Width: " + Math.Round(viewWidth * 1000, 2) + " mm");
+                    Debug.Print("View Height: " + Math.Round(viewHeight * 1000, 2) + " mm");
+
+                    double[] viewPosition = (double[])swView.Position;
+                    Debug.Print("View Position: X = " + Math.Round(viewPosition[0] * 1000, 2) + " mm, Y = " + Math.Round(viewPosition[1] * 1000, 2) + " mm");
+
                     if (polyLineCount == 16)
                     {
                         // 这个view是方管的右左视图，执行以下的for循环逻辑
                         DimensioningTubeSection(vEdges);
                         RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
+                        RelocateDimension(swView);
                     }
-                    /*else if (polyLineCount == 28 || polyLineCount == 30)
+                    else if (Math.Round(viewWidth / viewHeight, 2) == 1 ||
+                             Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 50.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(50.0 / 100.0, 2) ||
+                             Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 60.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(60.0 / 100.0, 2) && polyLineCount >= 16)
                     {
-                        // CreateBrokenOutView(swView, swDrawDoc);
-                        // Re-check polyline count after creating broken out view
-                        int newCountShaded = 0;
-                        int newPolyLineCount = swView.GetPolyLineCount5(1, out newCountShaded);
-                        if (newPolyLineCount == 16)
-                        {
-                            DimensioningTubeSection(vEdges);
-                            RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
-                        }
-                    }*/
+                        //先空着
+                    }
+                    else if (vEdges.Any(edge => edge is Edge && ((Edge)edge).GetCurveParams3().CurveType == 3002))
+                    {
+                        // 满足条件的代码逻辑
+                        DimensioningHoles2(swView);
+                        DimensioningTubeSide(vEdges);
+                        Remove90And180DegreeDimensions(swView, swDrawDoc);
+                    }
+                   
                     else
                     {
                         DimensioningTubeSide(vEdges);
-                        Remove90DegreeDimension(swView, swDrawDoc);
+                        Remove90And180DegreeDimensions(swView, swDrawDoc);
                     }
-                    RelocateDimension(swView);
                 }
             }
 
@@ -114,30 +125,16 @@ namespace Dimensioning.csproj
                     vCurveParam[j] = curveParams[j];
                 }
 
-                // Debug.Print("The curve tag is: " + swCurveParaData.CurveTag);
-                // Debug.Print("The curve type as defined in swCurveType_e is: " + swCurveParaData.CurveType);
-
-                // Debug.Print("CurveType   = " + swCurve.Identity());
-                // Debug.Print("CurveLength = " + (swCurve.GetLength2((double)vCurveParam[6], (double)vCurveParam[7]) * 1000) + " mm");
-
-                // Debug.Print("The curve type as defined in swCurveType_e is: " + swCurveParaData.CurveType);
-                // Debug.Print("CurveLength = " + (swCurve.GetLength3((double)vCurveParam[6], (double)vCurveParam[7]) * 1000) + " mm");
-
                 double[] vLineParam = swCurve.LineParams as double[];
                 if (vLineParam != null)
                 {
-                    // Debug.Print("Root point = (" + (vLineParam[0] * 1000) + ", " + (vLineParam[1] * 1000) + ", " + (vLineParam[2] * 1000) + ") mm");
-                    // Debug.Print("Direction = (" + vLineParam[3] + ", " + vLineParam[4] + ", " + vLineParam[5] + ")");
-                    // Debug.Print("+++++++++++++++++++++++++++");
                 }
                 else
                 {
-                    // Debug.Print("Line parameters are not available.");
                 }
 
                 if (swCurveParaData.CurveType == 3001)
                 {
-                    // Debug.Print("The curve tag is: " + swCurveParaData.CurveTag);
                     swModel.ClearSelection2(true);
                     swView.SelectEntity(swEdge, true);
 
@@ -149,7 +146,6 @@ namespace Dimensioning.csproj
                         double[] curveParams2 = (double[])edge2.GetCurveParams2();
                         CurveParamData curveParams3 = (CurveParamData)edge2.GetCurveParams3();
 
-                        // Debug.Print("The curve tag is: " + curveParams3.CurveTag);
                         Curve curve2 = (Curve)edge2.GetCurve();
                         double[] lineParams2 = curve2.LineParams as double[];
 
@@ -167,7 +163,6 @@ namespace Dimensioning.csproj
                             if (areParallel && areEqualLength)
                             {
                                 swView.SelectEntity(edge2, true);
-                                //swModel.AddDimension2(0.2, 0.165, 0);
 
                                 // 计算放置尺寸的位置 - 视图中间并稍微向上
                                 double nXoffset = ((double[])curveParams3.EndPoint)[0] - ((double[])curveParams3.StartPoint)[0];
@@ -176,29 +171,16 @@ namespace Dimensioning.csproj
 
                                 //先把nOffset设置为0
                                 double nOffset = Math.Sqrt(Math.Pow(nXoffset, 2) + Math.Pow(nYoffset, 2) + Math.Pow(nZoffset, 2)) * 0;
-                                // Debug.Print("nOffset (暂时设置为0)= " + nOffset);
 
                                 double[] vOutline = (double[])swView.GetOutline();
                                 double nXpos = (vOutline[0] + vOutline[2]) / 2.0 + nOffset;
                                 double nYpos = vOutline[3] + nOffset;
 
-                                // Debug.Print("nXpos = " + nXpos);
-                                // Debug.Print("nYpos = " + nYpos);
                                 // 创建尺寸，即使实体在图纸视图中不可见
                                 swModel.AddDimension2(nXpos, nYpos, 0.0);
 
-                                /*DisplayDimension myDisplayDim;
-                                myDisplayDim = (DisplayDimension)swModel.Extension.AddDimension(nXpos, nYpos, 0.0, (int)swSmartDimensionDirection_e.swSmartDimensionDirection_Right);
-                                myDisplayDim.ExplementaryAngle();
-                                myDisplayDim.VerticallyOppositeAngle();*/
-
-                                // Debug.Print("Selected two parallel and equal length edges and added dimension.");
-                                //swModel.ClearSelection2(true);
-
                                 // 重新选中 edge1 继续遍历
                                 swView.SelectEntity(swEdge, false);
-                                // Debug.Print("The curve tag is: " + swCurveParaData.CurveTag);
-                                // Debug.Print("满足平行且相等");
 
                             }
                             else
@@ -234,8 +216,8 @@ namespace Dimensioning.csproj
             // Sort dimensions by their value in descending order
             dimensions.Sort((dim1, dim2) =>
             {
-                double val1 = dim1.GetDimension2(0).GetValue2("");
-                double val2 = dim2.GetDimension2(0).GetValue2("");
+                double val1 = Math.Round(dim1.GetDimension2(0).GetValue2(""), 3);
+                double val2 = Math.Round(dim2.GetDimension2(0).GetValue2(""), 3);
                 return val2.CompareTo(val1);
             });
 
@@ -244,7 +226,7 @@ namespace Dimensioning.csproj
             List<double> uniqueValues = new List<double>();
             foreach (var dim in dimensions)
             {
-                double value = dim.GetDimension2(0).GetValue2("");
+                double value = Math.Round(dim.GetDimension2(0).GetValue2(""), 3);
                 if (!valueCounts.ContainsKey(value))
                 {
                     valueCounts[value] = 1;
@@ -266,8 +248,17 @@ namespace Dimensioning.csproj
             // 计算真正的中间值：找到最接近 (maxValue + minValue) / 2 的值
             double targetMidValue = (maxValue + minValue) / 2;
             double midValue = uniqueValues
+            .Where(v => v % 10 == 0)
+            .OrderBy(v => Math.Abs(v - targetMidValue))
+            .FirstOrDefault();
+
+            // If no multiples of 10 are found, fall back to the closest value
+            if (midValue == 0)
+            {
+                midValue = uniqueValues
                 .OrderBy(v => Math.Abs(v - targetMidValue))
                 .First();
+            }
 
             // Process dimensions based on case
             bool isKeeping;
@@ -277,7 +268,7 @@ namespace Dimensioning.csproj
 
             foreach (var dim in dimensions)
             {
-                double value = dim.GetDimension2(0).GetValue2("");
+                double value = Math.Round(dim.GetDimension2(0).GetValue2(""), 3);
                 isKeeping = false;
 
                 if (valueCounts[maxValue] >= 4)  // Case A
@@ -330,7 +321,7 @@ namespace Dimensioning.csproj
             // First pass: find the largest edges
             for (int i = 0; i <= vEdges.GetUpperBound(0); i++)
             {
-                if (vEdges[i] is Edge swEdge)
+                if (vEdges[i] is Edge edge)
                 {
                     // Proceed with the rest of the logic
                 }
@@ -339,7 +330,6 @@ namespace Dimensioning.csproj
                     // Handle the case where the object is not an Edge
                     continue;
                 }
-                swEdge = (Edge)vEdges[i];
                 Curve swCurve = (Curve)swEdge.GetCurve();
                 CurveParamData swCurveParaData = (CurveParamData)swEdge.GetCurveParams3();
 
@@ -455,7 +445,7 @@ namespace Dimensioning.csproj
                 }
             }
         }
-        private void Remove90DegreeDimension(View view, DrawingDoc draw)
+        private void Remove90And180DegreeDimensions(View view, DrawingDoc draw)
         {
             DisplayDimension swDispDim = view.GetFirstDisplayDimension5();
             Sheet swSheet = view.Sheet;
@@ -475,10 +465,10 @@ namespace Dimensioning.csproj
             foreach (var dim in dimensions)
             {
                 double value = dim.GetDimension2(0).GetValue2("");
-                if (Math.Abs(value - 90.0) < 0.001) // Check if the dimension value is 90 degrees
+                if (Math.Abs(value - 90.0) < 0.001 || Math.Abs(value - 180.0) < 0.001) // Check if the dimension value is 90 or 180 degrees
                 {
                     Annotation annotation = (Annotation)dim.GetAnnotation();
-                    // Debug.Print("Deleting 90 degree dimension: " + annotation.GetName());
+                    // Debug.Print("Deleting 90 or 180 degree dimension: " + annotation.GetName());
                     annotation.Select2(false, 0);
                     swModel.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Absorbed);
                 }
@@ -512,7 +502,7 @@ namespace Dimensioning.csproj
             double height = Math.Abs(endY - startY);
 
             // Print rectangle dimensions that will be created
-            Debug.Print($"Rectangle width: {Math.Abs(endX - startX):F3}, height: {Math.Abs(endY - startY):F3}");
+            Debug.Print($"Rectangle width: {Math.Abs(endX - startX):F2}, height: {Math.Abs(endY - startY):F2}");
 
             // Create the corner rectangle using the outline coordinates
             swModel.SketchManager.CreateCornerRectangle(startX, startY, 0, endX, endY, 0);
@@ -532,7 +522,7 @@ namespace Dimensioning.csproj
             }
 
             // Sort dimensions by vertical position
-            dimensions.Sort((a, b) => 
+            dimensions.Sort((a, b) =>
             {
                 double[] posA = (double[])((Annotation)a.GetAnnotation()).GetPosition();
                 double[] posB = (double[])((Annotation)b.GetAnnotation()).GetPosition();
@@ -540,14 +530,26 @@ namespace Dimensioning.csproj
             });
 
             const double minVerticalGap = 0.015; // Minimum vertical gap between dimensions
-            
+
             double[] vOutline = (double[])view.GetOutline();
             double viewCenterX = (vOutline[0] + vOutline[2]) / 2.0;
             double viewWidth = Math.Abs(vOutline[2] - vOutline[0]);
 
+            // Auto-arrange all dimensions in the view
+            swModel.Extension.AlignDimensions((int)swAlignDimensionType_e.swAlignDimensionType_AutoArrange, 0.06);
+
             // Adjust positions to distribute dimensions around the view
             for (int i = 0; i < dimensions.Count; i++)
             {
+                // Check if this is an angle dimension
+                bool isAngleDimension = dimensions[i].GetDimension2(0).GetType() == (int)swDimensionType_e.swAngularDimension;
+
+                // Skip angle dimensions
+                if (isAngleDimension)
+                {
+                    continue;
+                }
+
                 Annotation currentAnnotation = (Annotation)dimensions[i].GetAnnotation();
                 double[] currentPos = (double[])currentAnnotation.GetPosition();
 
@@ -555,21 +557,412 @@ namespace Dimensioning.csproj
                 if (i % 2 == 0)
                 {
                     // Even indices - place on left side
-                    currentPos[0] = vOutline[0] - viewWidth * 0.2;
+                    currentPos[0] = vOutline[0] - viewWidth * 0.05;
                 }
                 else
                 {
                     // Odd indices - place on right side
-                    currentPos[0] = vOutline[2] + viewWidth * 0.2;
+                    currentPos[0] = vOutline[2] + viewWidth * 0.05;
                 }
 
                 // Adjust vertical position with consistent spacing
                 currentPos[1] = vOutline[3] - (i * minVerticalGap);
-                
+
                 // Apply new position
                 currentAnnotation.SetPosition2(currentPos[0], currentPos[1], currentPos[2]);
             }
+
+
         }
+        private void AddOrdinateDimension(View swView)
+        {
+            try
+            {
+                ModelDocExtension swModelDocExt = swModel.Extension;
+                SelectionMgr swSelMgr = (SelectionMgr)swModel.SelectionManager;
+                DisplayDimension swDisplayDimension;
+                bool status = false;
+                int errors = 0;
+
+                // Get all edges
+                object vEdgesOut;
+                object[] vEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
+
+                // Process circles
+                foreach (object edgeObj in vEdges)
+                {
+                    Edge edge = edgeObj as Edge;
+                    if (edge == null) continue;
+                    Curve curve = (Curve)edge.GetCurve();
+                    CurveParamData curveData = edge.GetCurveParams3();
+
+                    if (curveData.CurveType == 3002) // Circle
+                    {
+                        double[] center = curve.CircleParams as double[];
+                        if (center != null)
+                        {
+                            // Add horizontal ordinate dimension
+                            swModel.ClearSelection2(true);
+                            status = swModelDocExt.SelectByID2("", "VERTEX", center[0], center[1], 0, false, 0, null, 0);
+                            errors = swModelDocExt.AddOrdinateDimension(
+                                (int)swAddOrdinateDims_e.swHorizontalOrdinate,
+                                center[0],
+                                center[1] + 0.02,
+                                0
+                            );
+
+                            // Add vertical ordinate dimension
+                            swModel.ClearSelection2(true);
+                            status = swModelDocExt.SelectByID2("", "VERTEX", center[0], center[1], 0, false, 0, null, 0);
+                            errors = swModelDocExt.AddOrdinateDimension(
+                                (int)swAddOrdinateDims_e.swVerticalOrdinate,
+                                center[0] - 0.02,  // Offset to the left
+                                center[1],
+                                0
+                            );
+
+                            // Set arrow size if needed
+                            if (swModel.Extension.SelectByID2("D1@" + swView.GetName2(), "DIMENSION", center[0], center[1], 0, false, 0, null, 0))
+                            {
+                                swDisplayDimension = (DisplayDimension)swSelMgr.GetSelectedObject6(1, -1);
+                                swDisplayDimension.SetOrdinateDimensionArrowSize(false, 0.003);
+                            }
+                        }
+                    }
+                }
+
+                swModel.ClearSelection2(true);
+                Debug.Print("Ordinate dimensioning completed successfully");
+            }
+            catch (Exception ex)
+            {
+                Debug.Print($"Error adding ordinate dimensions: {ex.Message}");
+                swModel.ClearSelection2(true);
+            }
+        }
+        private void DimensioningHoles(View swView)
+        {
+            object vEdgesOut;
+            object[] vEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
+            double minX = double.MaxValue;
+            double minY = double.MaxValue;
+            Edge originEdge = null;
+
+            // Find the edge closest to bottom-left corner
+            foreach (object edgeObj in vEdges)
+            {
+                Edge edge = edgeObj as Edge;
+                if (edge == null) continue;
+                Curve curve = (Curve)edge.GetCurve();
+                double[] lineParams = curve.LineParams as double[];
+
+                if (lineParams != null)
+                {
+                    if (lineParams[0] <= minX && lineParams[1] <= minY)
+                    {
+                        minX = lineParams[0];
+                        minY = lineParams[1];
+                        originEdge = edge;
+                    }
+                }
+            }
+
+            // Create a list to store already dimensioned locations
+            HashSet<string> dimensionedLocations = new HashSet<string>();
+
+            // Process each edge
+            foreach (object edgeObj in vEdges)
+            {
+                Edge edge = (Edge)edgeObj;
+                Curve curve = (Curve)edge.GetCurve();
+                CurveParamData curveData = edge.GetCurveParams3();
+
+                // Check for circular edges (holes)
+                if (curveData.CurveType == 3002) // Arc/Circle type
+                {
+                    double[] center = curve.CircleParams as double[];
+                    if (center != null)
+                    {
+                        // Get view position
+                        double[] viewPos = (double[])swView.Position;
+                        // Print view position coordinates
+                        if (viewPos != null)
+                        {
+                            Debug.Print($"View Position: ({viewPos[0]}, {viewPos[1]}");
+                        }
+                        // Get view outline bounds
+                        double[] outlineBounds = (double[])swView.GetOutline();
+                        if (outlineBounds != null)
+                        {
+                            Debug.Print($"View Outline: Left={outlineBounds[0]}, Top={outlineBounds[1]}, Right={outlineBounds[2]}, Bottom={outlineBounds[3]}");
+                        }
+
+                        // Print circle center coordinates 
+                        Debug.Print($"Circle Center: ({center[0]}, {center[1]}, {center[2]})");
+
+                        string locationKey = $"{Math.Round(center[0], 6)},{Math.Round(center[1], 6)}";
+
+                        if (!dimensionedLocations.Contains(locationKey))
+                        {
+                            // Add diameter dimension closer to the circle
+                            swView.SelectEntity(edge, true);
+                            //swModel.AddDimension2(center[0] + 0.01, center[1] + 0.01, 0);
+                            swModel.AddDimension2(outlineBounds[0], outlineBounds[3], 0);
+                            swModel.ClearSelection2(true);
+
+                            if (originEdge != null)
+                            {
+                                // Add vertical dimension closer to circle
+                                swModel.ClearSelection2(true);
+                                swView.SelectEntity(originEdge, false);
+                                swView.SelectEntity(edge, true);
+
+                                CurveParamData curveParams3 = edge.GetCurveParams3();
+                                double[] curveParams2 = (double[])edge.GetCurveParams2();
+
+                                Debug.Print("GetCurveParams3: " + curveParams3.CurveType);
+                                Debug.Print("GetCurveParams2: " + string.Join(", ", curveParams2));
+                                // swModel.AddVerticalDimension2(center[0] - 0.01, center[1], 1);
+                                //swModel.AddVerticalDimension2(outlineBounds[0], center[3], 1);
+                                swModel.AddVerticalDimension2(outlineBounds[0], outlineBounds[3], 0);
+
+
+                                // Select the leftmost point of originEdge
+                                Curve originCurve = (Curve)originEdge.GetCurve();
+                                double[] originEdgeParams = originCurve.LineParams as double[];
+                                if (originEdgeParams != null)
+                                {
+                                    Vertex startVertex = (Vertex)originEdge.GetStartVertex();
+                                    Vertex endVertex = (Vertex)originEdge.GetEndVertex();
+
+                                    double[] startPoint = (double[])startVertex.GetPoint();
+                                    double[] endPoint = (double[])endVertex.GetPoint();
+
+                                    swModel.ClearSelection2(true);
+                                    if (swView.GetOrientationName().ToLower().Contains("front"))
+                                    {
+                                        swView.SelectEntity(startVertex, true);
+                                    }
+                                    else
+                                    {
+                                        swView.SelectEntity(endVertex, true);
+                                    }
+
+                                }
+                                swView.SelectEntity(edge, true);
+                                // swModel.AddHorizontalDimension2(center[0], center[1] - 0.01, 1);
+                                //swModel.AddHorizontalDimension2(center[1], outlineBounds[3], 1);
+                                swModel.AddHorizontalDimension2(outlineBounds[1], outlineBounds[3], 0);
+
+                            }
+
+                            dimensionedLocations.Add(locationKey);
+                        }
+                    }
+                }
+            }
+            swModel.ClearSelection2(true);
+            swModel.SetPickMode();
+        }
+        private void DimensioningHoles2(View swView)
+        {
+            object vEdgesOut;
+            object[] vEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
+            double minX = double.MaxValue;
+            double minY = double.MaxValue;
+            Edge originEdge = null;
+
+            // Find the edge closest to bottom-left corner
+            foreach (object edgeObj in vEdges)
+            {
+                Edge edge = (Edge)edgeObj;
+                Curve curve = (Curve)edge.GetCurve();
+                double[] lineParams = curve.LineParams as double[];
+
+                if (lineParams != null)
+                {
+                    if (lineParams[0] <= minX && lineParams[1] <= minY)
+                    {
+                        minX = lineParams[0];
+                        minY = lineParams[1];
+                        originEdge = edge;
+                    }
+                }
+            }
+
+            // Create a list to store already dimensioned locations
+            HashSet<string> dimensionedLocations = new HashSet<string>();
+
+            // Get view position
+            double[] viewPos = (double[])swView.Position;
+            // Print view position coordinates
+            // if (viewPos != null)
+            // {
+            //     Debug.Print($"View Position: ({viewPos[0]}, {viewPos[1]}");
+            // }
+            // Get view outline bounds
+            double[] outlineBounds = (double[])swView.GetOutline();
+            // if (outlineBounds != null)
+            // {
+            //     Debug.Print($"View Outline: Left={outlineBounds[0]}, Top={outlineBounds[1]}, Right={outlineBounds[2]}, Bottom={outlineBounds[3]}");
+            // }
+
+            // Process each edge
+            foreach (object edgeObj in vEdges)
+            {
+                Edge edge = (Edge)edgeObj;
+                Curve curve = (Curve)edge.GetCurve();
+                CurveParamData curveData = edge.GetCurveParams3();
+
+                // Check for circular edges (holes)
+                if (curveData.CurveType == 3002) // Arc/Circle type
+                {
+                    double[] center = curve.CircleParams as double[];
+                    if (center != null)
+                    {
+                        // Print circle center coordinates 
+                        //Debug.Print($"Circle Center: ({center[0]}, {center[1]}, {center[2]})");
+
+                        // Create MathUtility object
+                        MathUtility swMathUtil = (MathUtility)swApp.GetMathUtility();
+
+                        // Create MathPoint objects for the center point
+                        double[] centerData = new double[] { center[0], center[1], center[2] };
+                        MathPoint swModelCenterPt = (MathPoint)swMathUtil.CreatePoint(centerData);
+
+                        // Get the transformation matrix for the view
+                        MathTransform swViewXform = (MathTransform)swView.ModelToViewTransform;
+
+                        // Transform the center point to view space
+                        MathPoint swViewCenterPt = (MathPoint)swModelCenterPt.MultiplyTransform(swViewXform);
+
+                        // Extract the transformed coordinates
+                        double[] viewCenterData = (double[])swViewCenterPt.ArrayData;
+                        double viewCenterX = viewCenterData[0];
+                        double viewCenterY = viewCenterData[1];
+                        double viewCenterZ = viewCenterData[2];
+
+                        // Calculate the paper center coordinates
+                        //double paperCenterX = viewCenterX + viewPos[0] - outlineBounds[0];
+                        double paperCenterX = viewCenterX + (viewPos[0] - outlineBounds[0]) * 0.2;
+                        //double paperCenterY = viewCenterY + viewPos[1] - outlineBounds[1];
+                        double paperCenterY = viewCenterY + (viewPos[1] - outlineBounds[1]) * 0.6;
+                        double paperCenterZ = viewCenterZ;
+
+                        // Print the paper center coordinates
+                        // Debug.Print($"Paper Center: ({paperCenterX}, {paperCenterY}, {paperCenterZ})");
+
+                        string locationKey = $"{Math.Round(center[0], 6)},{Math.Round(center[1], 6)}";
+
+                        if (!dimensionedLocations.Contains(locationKey))
+                        {
+                            // Add diameter dimension closer to the circle
+                            swView.SelectEntity(edge, true);
+                            swModel.AddDimension2(paperCenterX, paperCenterY, 0);
+                            swModel.ClearSelection2(true);
+
+                            if (originEdge != null)
+                            {
+                                // Add vertical dimension closer to circle
+                                swModel.ClearSelection2(true);
+                                swView.SelectEntity(originEdge, false);
+                                swView.SelectEntity(edge, true);
+
+                                // Select the leftmost point of originEdge
+                                Curve originCurve = (Curve)originEdge.GetCurve();
+                                double[] originEdgeParams = originCurve.LineParams as double[];
+                                if (originEdgeParams != null)
+                                {
+                                    Vertex startVertex = (Vertex)originEdge.GetStartVertex();
+                                    Vertex endVertex = (Vertex)originEdge.GetEndVertex();
+
+                                    double[] startPoint = (double[])startVertex.GetPoint();
+                                    double[] endPoint = (double[])endVertex.GetPoint();
+
+                                    swModel.ClearSelection2(true);
+                                    if (swView.GetOrientationName().ToLower().Contains("front") ||
+                                        swView.GetOrientationName().ToLower().Contains("top") ||
+                                        swView.GetOrientationName().ToLower().Contains("left"))
+                                    {
+                                        swView.SelectEntity(startVertex, true);
+                                    }
+                                    else
+                                    {
+                                        swView.SelectEntity(endVertex, true);
+                                    }
+
+                                }
+                                swView.SelectEntity(edge, true);
+                                // DisplayDimension swDispDim = (DisplayDimension)swModel.AddHorizontalDimension2(outlineBounds[3], paperCenterY,  0);
+                                //DisplayDimension swDispDim = (DisplayDimension)swModel.AddHorizontalDimension2(outlineBounds[3], 0.3 + paperCenterX / 5, 0);
+                                DisplayDimension swDispDim = (DisplayDimension)swModel.AddHorizontalDimension2(paperCenterX, paperCenterY, 0);
+
+                                if (swDispDim != null)
+                                {
+                                    swDispDim.OffsetText = true;
+                                    /*swDispDim.CenterText = true;
+                                    swDispDim.OffsetText = false;*/
+                                }
+                                else
+                                {
+                                    Debug.Print("Failed to create DisplayDimension.");
+                                }
+
+                            }
+
+                            if (originEdge != null)
+                            {
+                                // Add vertical dimension closer to circle
+                                swModel.ClearSelection2(true);
+                                swView.SelectEntity(originEdge, false);
+                                swView.SelectEntity(edge, true);
+
+                                // Select the leftmost point of originEdge
+                                Curve originCurve = (Curve)originEdge.GetCurve();
+                                double[] originEdgeParams = originCurve.LineParams as double[];
+                                if (originEdgeParams != null)
+                                {
+                                    Vertex startVertex = (Vertex)originEdge.GetStartVertex();
+                                    Vertex endVertex = (Vertex)originEdge.GetEndVertex();
+
+                                    double[] startPoint = (double[])startVertex.GetPoint();
+                                    double[] endPoint = (double[])endVertex.GetPoint();
+
+                                    swModel.ClearSelection2(true);
+                                    if (swView.GetOrientationName().ToLower().Contains("front") ||
+                                     swView.GetOrientationName().ToLower().Contains("top") ||
+                                     swView.GetOrientationName().ToLower().Contains("left"))
+                                    {
+                                        swView.SelectEntity(startVertex, true);
+                                    }
+                                    else
+                                    {
+                                        swView.SelectEntity(endVertex, true);
+                                    }
+
+                                }
+                                swView.SelectEntity(edge, true);
+                                DisplayDimension swDispDim = (DisplayDimension)swModel.AddVerticalDimension2(viewCenterX, paperCenterY, 0);
+                                if (swDispDim != null)
+                                {
+                                    swDispDim.OffsetText = true;
+                                    /*swDispDim.CenterText = true;
+                                    swDispDim.OffsetText = false;*/
+                                }
+                                else
+                                {
+                                    Debug.Print("Failed to create DisplayDimension.");
+                                }
+                            }
+                            dimensionedLocations.Add(locationKey);
+                        }
+                    }
+                }
+            }
+            swModel.ClearSelection2(true);
+            swModel.SetPickMode();
+        }
+
         public SldWorks swApp;
     }
 }

@@ -29,6 +29,12 @@ namespace WeldCutList
             btnDuplicate.Click += Button_Click_4;
             drawingViewModel = new DrawingViewModel();
             DataContext = drawingViewModel;
+            this.Loaded += (s, e) =>
+            {
+                var screen = System.Windows.SystemParameters.WorkArea;
+                this.Left = screen.Right - this.Width;
+                this.Top = (screen.Height - this.Height) / 2;
+            };
         }
 
         /// <summary>

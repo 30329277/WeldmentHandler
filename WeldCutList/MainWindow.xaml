@@ -5,8 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WeldCutList"
         mc:Ignorable="d"
-        Title="WeldmentCutList" Height="600" Width="600
-        ">
+        Title="WeldmentCutList" Height="600" Width="400">
     <!--<Window.DataContext>
         <local:
     </Window.DataContext>-->
