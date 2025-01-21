@@ -88,7 +88,7 @@ namespace Dimensioning.csproj
                         DimensioningTubeSide(vEdges);
                         Remove90And180DegreeDimensions(swView, swDrawDoc);
                     }
-                   
+
                     else
                     {
                         DimensioningTubeSide(vEdges);
@@ -502,14 +502,26 @@ namespace Dimensioning.csproj
             double centerX = (startX + endX) / 2;
             double centerY = (startY + endY) / 2;
 
-            // Print the center coordinates
-            Debug.Print($"Circle Center: X = {centerX}, Y = {centerY}");
+            // Get the transformation matrix for the view
+            MathTransform swViewXform = (MathTransform)swView.ModelToViewTransform;
 
-            // Select the current view
-            swModel.SketchManager.CreateCircleByRadius(centerX, centerY, 0, 0.250);
-            // Select the current view
-            swModel.SketchManager.CreateCircleByRadius(0, 0, 0, 0.250);
+            // Get the position of the view in sheet space
+            double[] viewPosition = (double[])swView.Position;
+
+            // Get the scale of the view
+            double scale = swView.ScaleDecimal;
             
+            // Calculate the relative position of the view on the sheet considering the scale
+            double relativeX = (viewPosition[0] + (vOutline[0] + vOutline[2]) / 2) /2/scale;
+            double relativeY = (viewPosition[1] + (vOutline[1] + vOutline[3]) / 2) /2/ scale;
+
+
+            // Print the relative position
+            Debug.Print($"Relative Position: X = {relativeX}, Y = {relativeY}");
+
+            swModel.SketchManager.CreateCircleByRadius(relativeX, relativeY, 0, 0.250);
+            //swModel.SketchManager.CreateCircleByRadius(0, 0, 0, 0.250);
+
             // Create broken-out section
             swDrawDoc.CreateBreakOutSection(0.2); // 200mm depth
         }
