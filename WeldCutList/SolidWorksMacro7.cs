@@ -1,4 +1,5 @@
-﻿using SolidWorks.Interop.sldworks;
+﻿using OfficeOpenXml.FormulaParsing.Excel.Functions.Logical;
+using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
 using System;
 using System.Collections.Generic;
@@ -78,10 +79,14 @@ namespace Dimensioning.csproj
                              Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 50.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(50.0 / 100.0, 2) ||
                              Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 60.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(60.0 / 100.0, 2) && polyLineCount >= 16)
                     {
-                        //先空着
                         CreateBrokenOutView(swView, swDrawDoc);
+                        if (polyLineCount == 16)
+                        {
+                            DimensioningTubeSection(vEdges);
+                        }
                     }
-                    else if (vEdges.Any(edge => ((Edge)edge).GetCurveParams3().CurveType == 3002))
+                    else if (vEdges.Any(edge => edge is Edge && ((Edge)edge).GetCurveParams3().CurveType == 3002))
+
                     {
                         // 满足条件的代码逻辑
                         DimensioningHoles2(swView);
@@ -94,7 +99,7 @@ namespace Dimensioning.csproj
                         DimensioningTubeSide(vEdges);
                         Remove90And180DegreeDimensions(swView, swDrawDoc);
                     }
-                    swModel.Extension.AlignDimensions((int)swAlignDimensionType_e.swAlignDimensionType_AutoArrange, 0.06);
+
                 }
             }
 
@@ -440,6 +445,8 @@ namespace Dimensioning.csproj
                     }
                 }
             }
+
+            swModel.ClearSelection2(true);
         }
         private void Remove90And180DegreeDimensions(View view, DrawingDoc draw)
         {
@@ -469,64 +476,68 @@ namespace Dimensioning.csproj
                     swModel.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Absorbed);
                 }
             }
+            swModel.ClearSelection2(true);
         }
         private void CreateBrokenOutView(View swView, DrawingDoc swDrawDoc)
         {
             try
             {
-                // Get math utility and create transform
-                MathUtility swMathUtil = (MathUtility)swApp.GetMathUtility();
+                // Check if there is an active view and deactivate it
+                View activeView = (View)swDrawDoc.ActiveDrawingView;
+                swDrawDoc.ActivateView(swView.Name);
 
-                // Create up vector (0,1,0)
-                double[] vectorData = new double[] { 0, 1, 0 };
-                MathVector swMathVect = (MathVector)swMathUtil.CreateVector(vectorData);
+                if (activeView != null && activeView.Name != swView.Name)
+                {
+                    Debug.Print("Active View Name: " + activeView.GetName2());
+                    Debug.Print("swView Name: " + swView.GetName2());
+                    swDrawDoc.ActivateView(swView.Name);
+                }
+                else
+                {
+                    Debug.Print("No active view.");
+                }
 
-                // Get view transform and normalize
-                MathTransform swTransform = (MathTransform)swView.ModelToViewTransform;
-                swMathVect = (MathVector)swMathVect.MultiplyTransform(swTransform);
-                swMathVect = (MathVector)swMathVect.Normalise();
+                SketchManager swSketchMgr = swModel.SketchManager;
+                SketchSegment swSketchSeg;
 
-                // Convert vPts to double array
-                double[] vPtsArray = (double[])swMathVect.ArrayData;
-
-                // Get sheet properties for scaling
+                // Get sheet properties for scaling 
                 Sheet swSheet = swView.Sheet;
                 double[] sheetProps = (double[])swSheet.GetProperties();
                 double sheetScale = sheetProps[3];
 
                 // Get view center coordinates
-                /*double[] viewOutline = (double[])swView.GetOutline();
-                double centerX = (viewOutline[0] + viewOutline[2]) / 2.0;
-                double centerY = (viewOutline[1] + viewOutline[3]) / 2.0;*/
+                double[] viewOutline = (double[])swView.GetOutline();
+                double viewWidth = Math.Abs(viewOutline[2] - viewOutline[0]);
+                double viewHeight = Math.Abs(viewOutline[3] - viewOutline[1]);
 
+                //swSketchMgr.InsertSketch(true);
 
-                double centerX = sheetScale * (vPtsArray[0]);
-                double centerY = sheetScale * (vPtsArray[1]);
+                swSketchSeg = swSketchMgr.CreateCircleByRadius(0, 0, 0, Math.Round((viewWidth + viewHeight), 2) * 3);
 
-                // Clear selection and select view
-                swModel.ClearSelection2(true);
-                //swModel.Extension.SelectByID2(swView.GetName2(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+                //swSketchMgr.InsertSketch(false);
 
-                // Create circle sketch for broken-out section
-                double radius = 0.025 * sheetScale; // Scale the radius based on sheet scale
+                // Select the line
+                if (swSketchSeg != null)
+                {
+                    swSketchSeg.Select4(false, null);
+                }
+                // Create section view 
+                // Get view scale and transform information
+                double viewScale = swView.ScaleDecimal;
+                MathTransform viewTransform = swView.ModelToViewTransform;
 
-                double[] viewPosition = (double[])swView.Position;
-                swModel.SketchManager.CreateCircleByRadius(sheetScale * viewPosition[0], sheetScale * viewPosition[1], 0, radius);
+                double averageDimension = (viewWidth + viewHeight) / 2.0;
 
-                // Create broken-out section with scaled depth
-                double depth = 0.2; // Scale the depth based on sheet scale
-                swDrawDoc.CreateBreakOutSection(depth);
+                // Calculate depth as a proportion of the view size, adjusted by scale
+                double breakoutDepth = averageDimension / viewScale * 0.5; // 0.5 is a proportion factor you can adjust
 
-                Debug.Print($"Sheet Scale: {sheetScale}");
-                Debug.Print($"View Center: X={centerX}, Y={centerY}");
-                Debug.Print($"Circle Radius: {radius}");
-                Debug.Print($"Break Out Depth: {depth}");
+                bool status = swDrawDoc.CreateBreakOutSection(breakoutDepth);
             }
             catch (Exception ex)
             {
                 Debug.Print($"Error creating broken-out view: {ex.Message}");
-                swModel.ClearSelection2(true);
             }
+            swModel.ClearSelection2(true);
         }
         private void RelocateDimension(View view)
         {
@@ -792,17 +803,19 @@ namespace Dimensioning.csproj
             // Find the edge closest to bottom-left corner
             foreach (object edgeObj in vEdges)
             {
-                Edge edge = (Edge)edgeObj;
-                Curve curve = (Curve)edge.GetCurve();
-                double[] lineParams = curve.LineParams as double[];
-
-                if (lineParams != null)
+                if (edgeObj is Edge edge)
                 {
-                    if (lineParams[0] <= minX && lineParams[1] <= minY)
+                    Curve curve = (Curve)edge.GetCurve();
+                    double[] lineParams = curve.LineParams as double[];
+
+                    if (lineParams != null)
                     {
-                        minX = lineParams[0];
-                        minY = lineParams[1];
-                        originEdge = edge;
+                        if (lineParams[0] <= minX && lineParams[1] <= minY)
+                        {
+                            minX = lineParams[0];
+                            minY = lineParams[1];
+                            originEdge = edge;
+                        }
                     }
                 }
             }
@@ -827,157 +840,169 @@ namespace Dimensioning.csproj
             // Process each edge
             foreach (object edgeObj in vEdges)
             {
-                Edge edge = (Edge)edgeObj;
-                Curve curve = (Curve)edge.GetCurve();
-                CurveParamData curveData = edge.GetCurveParams3();
-
-                // Check for circular edges (holes)
-                if (curveData.CurveType == 3002) // Arc/Circle type
+                if (edgeObj is Edge edge)
                 {
-                    double[] center = curve.CircleParams as double[];
-                    if (center != null)
+                    Curve curve = (Curve)edge.GetCurve();
+                    CurveParamData curveData = edge.GetCurveParams3();
+
+                    // Check for circular edges (holes)
+                    if (curveData.CurveType == 3002) // Arc/Circle type
                     {
-                        // Print circle center coordinates 
-                        //Debug.Print($"Circle Center: ({center[0]}, {center[1]}, {center[2]})");
-
-                        // Create MathUtility object
-                        MathUtility swMathUtil = (MathUtility)swApp.GetMathUtility();
-
-                        // Create MathPoint objects for the center point
-                        double[] centerData = new double[] { center[0], center[1], center[2] };
-                        MathPoint swModelCenterPt = (MathPoint)swMathUtil.CreatePoint(centerData);
-
-                        // Get the transformation matrix for the view
-                        MathTransform swViewXform = (MathTransform)swView.ModelToViewTransform;
-
-                        // Transform the center point to view space
-                        MathPoint swViewCenterPt = (MathPoint)swModelCenterPt.MultiplyTransform(swViewXform);
-
-                        // Extract the transformed coordinates
-                        double[] viewCenterData = (double[])swViewCenterPt.ArrayData;
-                        double viewCenterX = viewCenterData[0];
-                        double viewCenterY = viewCenterData[1];
-                        double viewCenterZ = viewCenterData[2];
-
-                        // Calculate the paper center coordinates
-                        //double paperCenterX = viewCenterX + viewPos[0] - outlineBounds[0];
-                        double paperCenterX = viewCenterX + (viewPos[0] - outlineBounds[0]) * 0.2;
-                        //double paperCenterY = viewCenterY + viewPos[1] - outlineBounds[1];
-                        double paperCenterY = viewCenterY + (viewPos[1] - outlineBounds[1]) * 0.6;
-                        double paperCenterZ = viewCenterZ;
-
-                        // Print the paper center coordinates
-                        // Debug.Print($"Paper Center: ({paperCenterX}, {paperCenterY}, {paperCenterZ})");
-
-                        string locationKey = $"{Math.Round(center[0], 6)},{Math.Round(center[1], 6)}";
-
-                        if (!dimensionedLocations.Contains(locationKey))
+                        double[] center = curve.CircleParams as double[];
+                        if (center != null)
                         {
-                            // Add diameter dimension closer to the circle
-                            swView.SelectEntity(edge, true);
-                            swModel.AddDimension2(paperCenterX, paperCenterY, 0);
-                            swModel.ClearSelection2(true);
+                            // Print circle center coordinates 
+                            //Debug.Print($"Circle Center: ({center[0]}, {center[1]}, {center[2]})");
 
-                            if (originEdge != null)
+                            // Create MathUtility object
+                            MathUtility swMathUtil = (MathUtility)swApp.GetMathUtility();
+
+                            // Create MathPoint objects for the center point
+                            double[] centerData = new double[] { center[0], center[1], center[2] };
+                            MathPoint swModelCenterPt = (MathPoint)swMathUtil.CreatePoint(centerData);
+
+                            // Get the transformation matrix for the view
+                            MathTransform swViewXform = (MathTransform)swView.ModelToViewTransform;
+
+                            // Transform the center point to view space
+                            MathPoint swViewCenterPt = (MathPoint)swModelCenterPt.MultiplyTransform(swViewXform);
+
+                            // Extract the transformed coordinates
+                            double[] viewCenterData = (double[])swViewCenterPt.ArrayData;
+                            double viewCenterX = viewCenterData[0];
+                            double viewCenterY = viewCenterData[1];
+                            double viewCenterZ = viewCenterData[2];
+
+                            // Calculate the paper center coordinates
+                            //double paperCenterX = viewCenterX + viewPos[0] - outlineBounds[0];
+                            double paperCenterX = viewCenterX + (viewPos[0] - outlineBounds[0]) * 0.2;
+                            //double paperCenterY = viewCenterY + viewPos[1] - outlineBounds[1];
+                            double paperCenterY = viewCenterY + (viewPos[1] - outlineBounds[1]) * 0.6;
+                            double paperCenterZ = viewCenterZ;
+
+                            // Print the paper center coordinates
+                            Debug.Print($"Paper Center: ({paperCenterX}, {paperCenterY}, {paperCenterZ})");
+
+                            string locationKey = $"{Math.Round(center[0], 6)},{Math.Round(center[1], 6)}";
+
+                            if (!dimensionedLocations.Contains(locationKey))
                             {
-                                // Add vertical dimension closer to circle
-                                swModel.ClearSelection2(true);
-                                swView.SelectEntity(originEdge, false);
+                                // Add diameter dimension closer to the circle
                                 swView.SelectEntity(edge, true);
+                                swModel.AddDimension2(paperCenterX, paperCenterY, 0);
+                                swModel.ClearSelection2(true);
 
-                                // Select the leftmost point of originEdge
-                                Curve originCurve = (Curve)originEdge.GetCurve();
-                                double[] originEdgeParams = originCurve.LineParams as double[];
-                                if (originEdgeParams != null)
+                                if (originEdge != null)
                                 {
-                                    Vertex startVertex = (Vertex)originEdge.GetStartVertex();
-                                    Vertex endVertex = (Vertex)originEdge.GetEndVertex();
-
-                                    double[] startPoint = (double[])startVertex.GetPoint();
-                                    double[] endPoint = (double[])endVertex.GetPoint();
-
+                                    // Add vertical dimension closer to circle
                                     swModel.ClearSelection2(true);
-                                    if (swView.GetOrientationName().ToLower().Contains("front") ||
-                                        swView.GetOrientationName().ToLower().Contains("top") ||
-                                        swView.GetOrientationName().ToLower().Contains("left"))
+                                    swView.SelectEntity(originEdge, false);
+                                    swView.SelectEntity(edge, true);
+
+                                    // Select the leftmost point of originEdge
+                                    Curve originCurve = (Curve)originEdge.GetCurve();
+                                    double[] originEdgeParams = originCurve.LineParams as double[];
+                                    if (originEdgeParams != null)
                                     {
-                                        swView.SelectEntity(startVertex, true);
+                                        Vertex startVertex = (Vertex)originEdge.GetStartVertex();
+                                        Vertex endVertex = (Vertex)originEdge.GetEndVertex();
+
+                                        double[] startPoint = (double[])startVertex.GetPoint();
+                                        double[] endPoint = (double[])endVertex.GetPoint();
+
+                                        swModel.ClearSelection2(true);
+                                        if (swView.GetOrientationName().ToLower().Contains("front") ||
+                                            swView.GetOrientationName().ToLower().Contains("top") ||
+                                            swView.GetOrientationName().ToLower().Contains("left"))
+                                        {
+                                            swView.SelectEntity(startVertex, true);
+                                        }
+                                        else
+                                        {
+                                            swView.SelectEntity(endVertex, true);
+                                        }
+
+                                    }
+                                    swView.SelectEntity(edge, true);
+                                    // DisplayDimension swDispDim = (DisplayDimension)swModel.AddHorizontalDimension2(outlineBounds[3], paperCenterY,  0);
+                                    //DisplayDimension swDispDim = (DisplayDimension)swModel.AddHorizontalDimension2(outlineBounds[3], 0.3 + paperCenterX / 5, 0);
+                                    DisplayDimension horizontalDim = (DisplayDimension)swModel.AddHorizontalDimension2(viewCenterX, viewCenterY, 0);
+
+                                    if (horizontalDim != null)
+                                    {
+                                        horizontalDim.OffsetText = true;
+                                        /*horizontalDim.CenterText = true;
+                                        horizontalDim.OffsetText = false;*/
                                     }
                                     else
                                     {
-                                        swView.SelectEntity(endVertex, true);
+                                        Debug.Print("Failed to create DisplayDimension.");
                                     }
 
                                 }
-                                swView.SelectEntity(edge, true);
-                                // DisplayDimension swDispDim = (DisplayDimension)swModel.AddHorizontalDimension2(outlineBounds[3], paperCenterY,  0);
-                                //DisplayDimension swDispDim = (DisplayDimension)swModel.AddHorizontalDimension2(outlineBounds[3], 0.3 + paperCenterX / 5, 0);
-                                DisplayDimension swDispDim = (DisplayDimension)swModel.AddHorizontalDimension2(viewCenterX, viewCenterY, 0);
 
-                                if (swDispDim != null)
+                                if (originEdge != null)
                                 {
-                                    swDispDim.OffsetText = true;
-                                    /*swDispDim.CenterText = true;
-                                    swDispDim.OffsetText = false;*/
-                                }
-                                else
-                                {
-                                    Debug.Print("Failed to create DisplayDimension.");
-                                }
-
-                            }
-
-                            if (originEdge != null)
-                            {
-                                // Add vertical dimension closer to circle
-                                swModel.ClearSelection2(true);
-                                swView.SelectEntity(originEdge, false);
-                                swView.SelectEntity(edge, true);
-
-                                // Select the leftmost point of originEdge
-                                Curve originCurve = (Curve)originEdge.GetCurve();
-                                double[] originEdgeParams = originCurve.LineParams as double[];
-                                if (originEdgeParams != null)
-                                {
-                                    Vertex startVertex = (Vertex)originEdge.GetStartVertex();
-                                    Vertex endVertex = (Vertex)originEdge.GetEndVertex();
-
-                                    double[] startPoint = (double[])startVertex.GetPoint();
-                                    double[] endPoint = (double[])endVertex.GetPoint();
-
+                                    // Add vertical dimension closer to circle
                                     swModel.ClearSelection2(true);
-                                    if (swView.GetOrientationName().ToLower().Contains("front") ||
-                                     swView.GetOrientationName().ToLower().Contains("top") ||
-                                     swView.GetOrientationName().ToLower().Contains("left"))
+                                    swView.SelectEntity(originEdge, false);
+                                    swView.SelectEntity(edge, true);
+
+                                    // Select the leftmost point of originEdge
+                                    Curve originCurve = (Curve)originEdge.GetCurve();
+                                    double[] originEdgeParams = originCurve.LineParams as double[];
+                                    if (originEdgeParams != null)
                                     {
-                                        swView.SelectEntity(startVertex, true);
+                                        Vertex startVertex = (Vertex)originEdge.GetStartVertex();
+                                        Vertex endVertex = (Vertex)originEdge.GetEndVertex();
+
+                                        double[] startPoint = (double[])startVertex.GetPoint();
+                                        double[] endPoint = (double[])endVertex.GetPoint();
+
+                                        swModel.ClearSelection2(true);
+                                        if (swView.GetOrientationName().ToLower().Contains("front") ||
+                                         swView.GetOrientationName().ToLower().Contains("top") ||
+                                         swView.GetOrientationName().ToLower().Contains("left"))
+                                        {
+                                            swView.SelectEntity(startVertex, true);
+                                        }
+                                        else
+                                        {
+                                            swView.SelectEntity(endVertex, true);
+                                        }
+
+                                    }
+                                    swView.SelectEntity(edge, true);
+                                    DisplayDimension verticalDim = (DisplayDimension)swModel.AddVerticalDimension2(viewCenterX, paperCenterY, 0);
+                                    if (verticalDim != null)
+                                    {
+                                        verticalDim.OffsetText = true;
+                                        /*verticalDim.CenterText = true;
+                                        verticalDim.OffsetText = false;*/
                                     }
                                     else
                                     {
-                                        swView.SelectEntity(endVertex, true);
+                                        Debug.Print("Failed to create DisplayDimension.");
                                     }
-
                                 }
-                                swView.SelectEntity(edge, true);
-                                DisplayDimension swDispDim = (DisplayDimension)swModel.AddVerticalDimension2(viewCenterX, paperCenterY, 0);
-                                if (swDispDim != null)
-                                {
-                                    swDispDim.OffsetText = true;
-                                    /*swDispDim.CenterText = true;
-                                    swDispDim.OffsetText = false;*/
-                                }
-                                else
-                                {
-                                    Debug.Print("Failed to create DisplayDimension.");
-                                }
+                                dimensionedLocations.Add(locationKey);
                             }
-                            dimensionedLocations.Add(locationKey);
                         }
                     }
                 }
+
+                swModel.ClearSelection2(true);
+                swModel.SetPickMode();
             }
-            swModel.ClearSelection2(true);
-            swModel.SetPickMode();
+            // Select all dimensions in current view
+            DisplayDimension swDispDim = swView.GetFirstDisplayDimension5();
+            while (swDispDim != null)
+            {
+                Annotation annotation = (Annotation)swDispDim.GetAnnotation();
+                annotation.Select2(true, 0);
+                swDispDim = swDispDim.GetNext5();
+            }
+            swModel.Extension.AlignDimensions((int)swAlignDimensionType_e.swAlignDimensionType_AutoArrange, 0.06);
         }
 
         public SldWorks swApp;
