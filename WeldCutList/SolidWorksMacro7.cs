@@ -480,6 +480,43 @@ namespace Dimensioning.csproj
         }
         private void CreateBrokenOutView(View swView, DrawingDoc swDrawDoc)
         {
+            object vEdgesOut;
+            object[] vEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
+
+            foreach (object edgeObj in vEdges)
+            {
+                if (edgeObj is Edge edge)
+                {
+                    Curve curve = (Curve)edge.GetCurve();
+                    CurveParamData curveData = edge.GetCurveParams3();
+
+                    if (curveData.CurveType == 3001) // Straight line
+                    {
+                        double[] startPoint = new double[] { ((double[])curveData.StartPoint)[0], ((double[])curveData.StartPoint)[1], ((double[])curveData.StartPoint)[2] };
+                        double[] endPoint = new double[] { ((double[])curveData.EndPoint)[0], ((double[])curveData.EndPoint)[1], ((double[])curveData.EndPoint)[2] };
+
+                        // Create MathPoints for both start and end points
+                        MathUtility swMathUtil = (MathUtility)swApp.GetMathUtility();
+                        MathPoint swModelStartPt = (MathPoint)swMathUtil.CreatePoint(startPoint);
+                        MathPoint swModelEndPt = (MathPoint)swMathUtil.CreatePoint(endPoint);
+
+                        // Transform both points to view space
+                        MathTransform swViewXform = (MathTransform)swView.ModelToViewTransform;
+                        MathPoint swViewStartPt = (MathPoint)swModelStartPt.MultiplyTransform(swViewXform);
+                        MathPoint swViewEndPt = (MathPoint)swModelEndPt.MultiplyTransform(swViewXform);
+
+                        // Get transformed coordinates for both points
+                        double[] viewStartData = (double[])swViewStartPt.ArrayData;
+                        double[] viewEndData = (double[])swViewEndPt.ArrayData;
+
+                        Debug.Print($"Start point: ({viewStartData[0]}, {viewStartData[1]}, {viewStartData[2]})");
+                        Debug.Print($"End point: ({viewEndData[0]}, {viewEndData[1]}, {viewEndData[2]})");
+                                        
+                        break; // Exit after finding first straight line
+                    }
+                }
+            }
+
             try
             {
                 // Check if there is an active view and deactivate it
@@ -522,16 +559,7 @@ namespace Dimensioning.csproj
                     swSketchSeg.Select4(false, null);
                 }
                 // Create section view 
-                // Get view scale and transform information
-                double viewScale = swView.ScaleDecimal;
-                MathTransform viewTransform = swView.ModelToViewTransform;
-
-                double averageDimension = (viewWidth + viewHeight) / 2.0;
-
-                // Calculate depth as a proportion of the view size, adjusted by scale
-                double breakoutDepth = averageDimension / viewScale * 0.5; // 0.5 is a proportion factor you can adjust
-
-                bool status = swDrawDoc.CreateBreakOutSection(breakoutDepth);
+                bool status = swDrawDoc.CreateBreakOutSection(0.05);
             }
             catch (Exception ex)
             {
