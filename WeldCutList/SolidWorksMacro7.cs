@@ -596,7 +596,21 @@ namespace Dimensioning.csproj
 
                 if (viewEndData != null && swViewXform2 != null && swViewXform2.Length > 12)
                 {
-                    bool status = swDrawDoc.CreateBreakOutSection(viewEndData[2] / swViewXform2[12] * 0.5);
+                    // bool status = swDrawDoc.CreateBreakOutSection(viewEndData[2] / swViewXform2[12] * 0.5);
+                    int attempts = 0; // Define the attempts variable
+                    attempts++; // Increment the attempts variable
+
+                    if (viewEndData != null && viewEndData.Length > 2 && swViewXform2 != null && swViewXform2.Length > 12 && swViewXform2[12] != 0)
+                    {
+                        double cutDepth = viewEndData[2] / swViewXform2[12] * (0.5 + attempts * 0.5);
+                        Debug.Print($"Cut Depth: {cutDepth}");
+                        bool status = swDrawDoc.CreateBreakOutSection(cutDepth);
+                    }
+                    else
+                    {
+                        Debug.Print("Invalid data for calculating cut depth.");
+                    }
+                
                 }
                 else
                 {
