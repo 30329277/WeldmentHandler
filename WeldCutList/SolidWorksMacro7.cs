@@ -70,7 +70,8 @@ namespace Dimensioning.csproj
                     double[] viewPosition = (double[])swView.Position;
                     Debug.Print("View Position: X = " + Math.Round(viewPosition[0] * 1000, 2) + " mm, Y = " + Math.Round(viewPosition[1] * 1000, 2) + " mm");
 
-                    if (polyLineCount == 16)
+                    if (polyLineCount == 16 ||
+                        polyLineCount == 17 && vEdges.Count(e => e is Edge && ((Edge)e).GetCurveParams3().CurveType == 3002) == 8)
                     {
                         // 这个view是方管的右左视图，执行以下的for循环逻辑
                         DimensioningTubeSection(vEdges);
@@ -82,14 +83,15 @@ namespace Dimensioning.csproj
                              Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 60.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(60.0 / 100.0, 2) && polyLineCount >= 16)
                     {
                         CreateBrokenOutView(swView, swDrawDoc);
-                        int maxAttempts = 50;
+                        int maxAttempts = 20;
                         int attempts = 0;
 
                         while (attempts < maxAttempts)
                         {
                             CreateBrokenOutView(swView, swDrawDoc);
                             polyLineCount = swView.GetPolyLineCount5(1, out nCountShaded);
-                            if (polyLineCount == 16)
+                            if (polyLineCount == 16 ||
+                                polyLineCount == 17 && vEdges.Count(e => e is Edge && ((Edge)e).GetCurveParams3().CurveType == 3002) == 8)
                             {
                                 object[] updatedEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
                                 DimensioningTubeSection(updatedEdges);
@@ -99,6 +101,16 @@ namespace Dimensioning.csproj
                             }
                             attempts++;
                         }
+
+                        // Add additional logic to execute after maxAttempts
+                        if (attempts >= maxAttempts)
+                        {
+                            object[] updatedEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
+                            DimensioningTubeSection(updatedEdges);
+                            RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
+                            RelocateDimension(swView);
+                        }
+
                     }
                     else if (vEdges.Any(edge => edge is Edge && ((Edge)edge).GetCurveParams3().CurveType == 3002))
                     {
@@ -134,84 +146,90 @@ namespace Dimensioning.csproj
         {
             for (int i = 0; i <= vEdges.GetUpperBound(0); i++)
             {
-                swEdge = (Edge)vEdges[i];
-
-                Curve swCurve = (Curve)swEdge.GetCurve();
-                CurveParamData swCurveParaData = (CurveParamData)swEdge.GetCurveParams3();
-
-                double[] curveParams = (double[])swEdge.GetCurveParams2();
-                object[] vCurveParam = new object[curveParams.Length];
-                for (int j = 0; j < curveParams.Length; j++)
+                if (vEdges[i] is Edge swEdge)
                 {
-                    vCurveParam[j] = curveParams[j];
-                }
+                    if (swEdge == null) continue; // Add this check
 
-                double[] vLineParam = swCurve.LineParams as double[];
-                if (vLineParam != null)
-                {
-                }
-                else
-                {
-                }
+                    Curve swCurve = (Curve)swEdge.GetCurve();
+                    CurveParamData swCurveParaData = (CurveParamData)swEdge.GetCurveParams3();
 
-                if (swCurveParaData.CurveType == 3001)
-                {
-                    swModel.ClearSelection2(true);
-                    swView.SelectEntity(swEdge, true);
-
-                    for (int j = 0; j <= vEdges.GetUpperBound(0); j++)
+                    double[] curveParams = (double[])swEdge.GetCurveParams2();
+                    object[] vCurveParam = new object[curveParams.Length];
+                    for (int j = 0; j < curveParams.Length; j++)
                     {
-                        if (i == j) continue;
+                        vCurveParam[j] = curveParams[j];
+                    }
 
-                        Edge edge2 = (Edge)vEdges[j];
-                        double[] curveParams2 = (double[])edge2.GetCurveParams2();
-                        CurveParamData curveParams3 = (CurveParamData)edge2.GetCurveParams3();
+                    double[] vLineParam = swCurve.LineParams as double[];
+                    if (vLineParam != null)
+                    {
+                    }
+                    else
+                    {
+                    }
 
-                        Curve curve2 = (Curve)edge2.GetCurve();
-                        double[] lineParams2 = curve2.LineParams as double[];
+                    if (swCurveParaData.CurveType == 3001)
+                    {
+                        swModel.ClearSelection2(true);
+                        swView.SelectEntity(swEdge, true);
 
-                        if (lineParams2 != null)
+                        for (int j = 0; j <= vEdges.GetUpperBound(0); j++)
                         {
-                            bool areParallel =
-                            Math.Round(Math.Abs(vLineParam[3]), 2) == Math.Round(Math.Abs(lineParams2[3]), 2) &&
-                            Math.Round(Math.Abs(vLineParam[4]), 2) == Math.Round(Math.Abs(lineParams2[4]), 2) &&
-                            Math.Round(Math.Abs(vLineParam[5]), 2) == Math.Round(Math.Abs(lineParams2[5]), 2);
+                            if (i == j) continue;
 
-                            double length1 = swCurve.GetLength2(curveParams[6], (double)curveParams[7]) * 1000;
-                            double length2 = curve2.GetLength2((double)curveParams2[6], (double)curveParams2[7]) * 1000;
-                            bool areEqualLength = Math.Round(length1, 2) == Math.Round(length2, 2);
-
-                            if (areParallel && areEqualLength)
+                            if (vEdges[j] is Edge edge2)
                             {
-                                swView.SelectEntity(edge2, true);
+                                if (edge2 == null) continue; // Add this check
+                                double[] curveParams2 = (double[])edge2.GetCurveParams2();
+                                CurveParamData curveParams3 = (CurveParamData)edge2.GetCurveParams3();
 
-                                // 计算放置尺寸的位置 - 视图中间并稍微向上
-                                double nXoffset = ((double[])curveParams3.EndPoint)[0] - ((double[])curveParams3.StartPoint)[0];
-                                double nYoffset = ((double[])curveParams3.EndPoint)[1] - ((double[])curveParams3.StartPoint)[1];
-                                double nZoffset = ((double[])curveParams3.EndPoint)[2] - ((double[])curveParams3.StartPoint)[2];
+                                Curve curve2 = (Curve)edge2.GetCurve();
+                                double[] lineParams2 = curve2.LineParams as double[];
 
-                                //先把nOffset设置为0
-                                double nOffset = Math.Sqrt(Math.Pow(nXoffset, 2) + Math.Pow(nYoffset, 2) + Math.Pow(nZoffset, 2)) * 0;
+                                if (lineParams2 != null)
+                                {
+                                    bool areParallel =
+                                    Math.Round(Math.Abs(vLineParam[3]), 2) == Math.Round(Math.Abs(lineParams2[3]), 2) &&
+                                    Math.Round(Math.Abs(vLineParam[4]), 2) == Math.Round(Math.Abs(lineParams2[4]), 2) &&
+                                    Math.Round(Math.Abs(vLineParam[5]), 2) == Math.Round(Math.Abs(lineParams2[5]), 2);
 
-                                double[] vOutline = (double[])swView.GetOutline();
-                                double nXpos = (vOutline[0] + vOutline[2]) / 2.0 + nOffset;
-                                double nYpos = vOutline[3] + nOffset;
+                                    double length1 = swCurve.GetLength2(curveParams[6], (double)curveParams[7]) * 1000;
+                                    double length2 = curve2.GetLength2((double)curveParams2[6], (double)curveParams2[7]) * 1000;
+                                    bool areEqualLength = Math.Round(length1, 2) == Math.Round(length2, 2);
 
-                                // 创建尺寸，即使实体在图纸视图中不可见
-                                swModel.AddDimension2(nXpos, nYpos, 0.0);
+                                    if (areParallel && areEqualLength)
+                                    {
+                                        swView.SelectEntity(edge2, true);
 
-                                // 重新选中 edge1 继续遍历
-                                swView.SelectEntity(swEdge, false);
+                                        // 计算放置尺寸的位置 - 视图中间并稍微向上
+                                        double nXoffset = ((double[])curveParams3.EndPoint)[0] - ((double[])curveParams3.StartPoint)[0];
+                                        double nYoffset = ((double[])curveParams3.EndPoint)[1] - ((double[])curveParams3.StartPoint)[1];
+                                        double nZoffset = ((double[])curveParams3.EndPoint)[2] - ((double[])curveParams3.StartPoint)[2];
 
+                                        //先把nOffset设置为0
+                                        double nOffset = Math.Sqrt(Math.Pow(nXoffset, 2) + Math.Pow(nYoffset, 2) + Math.Pow(nZoffset, 2)) * 0;
+
+                                        double[] vOutline = (double[])swView.GetOutline();
+                                        double nXpos = (vOutline[0] + vOutline[2]) / 2.0 + nOffset;
+                                        double nYpos = vOutline[3] + nOffset;
+
+                                        // 创建尺寸，即使实体在图纸视图中不可见
+                                        swModel.AddDimension2(nXpos, nYpos, 0.0);
+
+                                        // 重新选中 edge1 继续遍历
+                                        swView.SelectEntity(swEdge, false);
+
+                                    }
+                                    else
+                                    {
+                                        // Debug.Print("不平行或者不相等");
+                                    }
+                                }
+                                else
+                                {
+                                    // Debug.Print("不是直线");
+                                }
                             }
-                            else
-                            {
-                                // Debug.Print("不平行或者不相等");
-                            }
-                        }
-                        else
-                        {
-                            // Debug.Print("不是直线");
                         }
                     }
                 }
@@ -506,29 +524,30 @@ namespace Dimensioning.csproj
                     Curve curve = (Curve)edge.GetCurve();
                     CurveParamData curveData = edge.GetCurveParams3();
 
-                    if (curveData.CurveType == 3001) // Straight line
+                    if (curveData.CurveType == 3002) // Circle
                     {
-                        double[] startPoint = new double[] { ((double[])curveData.StartPoint)[0], ((double[])curveData.StartPoint)[1], ((double[])curveData.StartPoint)[2] };
-                        double[] endPoint = new double[] { ((double[])curveData.EndPoint)[0], ((double[])curveData.EndPoint)[1], ((double[])curveData.EndPoint)[2] };
+                        double[] circleParams = curve.CircleParams as double[];
+                        if (circleParams != null)
+                        {
+                            // Get circle center point
+                            double[] centerPoint = new double[] { circleParams[0], circleParams[1], circleParams[2] };
 
-                        // Create MathPoints for both start and end points
-                        MathUtility swMathUtil = (MathUtility)swApp.GetMathUtility();
-                        MathPoint swModelStartPt = (MathPoint)swMathUtil.CreatePoint(startPoint);
-                        MathPoint swModelEndPt = (MathPoint)swMathUtil.CreatePoint(endPoint);
+                            // Create MathPoint for center point
+                            MathUtility swMathUtil = (MathUtility)swApp.GetMathUtility();
+                            MathPoint swModelCenterPt = (MathPoint)swMathUtil.CreatePoint(centerPoint);
 
-                        // Transform both points to view space
-                        MathTransform swViewXform = (MathTransform)swView.ModelToViewTransform;
-                        MathPoint swViewStartPt = (MathPoint)swModelStartPt.MultiplyTransform(swViewXform);
-                        MathPoint swViewEndPt = (MathPoint)swModelEndPt.MultiplyTransform(swViewXform);
+                            // Transform center point to view space
+                            MathTransform swViewXform = (MathTransform)swView.ModelToViewTransform;
+                            MathPoint swViewCenterPt = (MathPoint)swModelCenterPt.MultiplyTransform(swViewXform);
 
-                        // Get transformed coordinates for both points
-                        double[] viewStartData = (double[])swViewStartPt.ArrayData;
-                        viewEndData = (double[])swViewEndPt.ArrayData;
+                            // Get transformed coordinates for center point 
+                            viewEndData = (double[])swViewCenterPt.ArrayData;
 
-                        Debug.Print($"Start point: ({viewStartData[0]}, {viewStartData[1]}, {viewStartData[2]})");
-                        Debug.Print($"End point: ({viewEndData[0]}, {viewEndData[1]}, {viewEndData[2]})");
+                            Debug.Print($"Circle center point in view space: ({viewEndData[0]}, {viewEndData[1]}, {viewEndData[2]})");
+                            Debug.Print($"Circle radius: {circleParams[6]}");
 
-                        break; // Exit after finding first straight line
+                            break; // Exit after finding first circle
+                        }
                     }
                 }
             }
