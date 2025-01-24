@@ -77,12 +77,12 @@ namespace Dimensioning.csproj
                         RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
                         RelocateDimension(swView);
                     }
-                    else if (Math.Round(viewWidth / viewHeight, 2) == 1 ||
+                    else if (Math.Round(viewWidth / viewHeight, 2) == 1 || Math.Round(viewWidth / viewHeight, 2) == 0.95 ||
                              Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 50.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(50.0 / 100.0, 2) ||
                              Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 60.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(60.0 / 100.0, 2) && polyLineCount >= 16)
                     {
                         CreateBrokenOutView(swView, swDrawDoc);
-                        int maxAttempts = 10;
+                        int maxAttempts = 50;
                         int attempts = 0;
 
                         while (attempts < maxAttempts)
@@ -577,7 +577,7 @@ namespace Dimensioning.csproj
 
                 if (viewEndData != null && swViewXform2 != null && swViewXform2.Length > 12)
                 {
-                    bool status = swDrawDoc.CreateBreakOutSection(viewEndData[2] / swViewXform2[12] * 3);
+                    bool status = swDrawDoc.CreateBreakOutSection(viewEndData[2] / swViewXform2[12] * 0.5);
                 }
                 else
                 {
