@@ -83,8 +83,6 @@ namespace InsertUnfoldedView_CSharp.csproj
 
             #endregion
 
-
-
             #region 原来使用CreateUnfoldedViewAt3() 创建 viwe 的部分, 先注释掉
 
             //double xSpace = 0.19;

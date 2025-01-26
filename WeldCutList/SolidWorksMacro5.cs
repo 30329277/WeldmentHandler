@@ -183,16 +183,16 @@ namespace CenterOfMass_CSharp.csproj
                     swView = (View)vv[viewCount];
                     swSheetName = swView.Sheet.GetName();
                     SwViewName = (string)swView.Name;
-                    Debug.Print(swSheetName);
-                    Debug.Print(SwViewName);
+                    //Debug.Print(swSheetName);
+                    //Debug.Print(SwViewName);
 
                     //试试outline在view 重置 body 以后是否发生了变化
                     double[] outline = (double[])swView.GetOutline();
                     double[] pos = (double[])swView.Position;
-                    Debug.Print("  X and Y positions = (" + pos[0] * 1000.0 + ", " + pos[1] * 1000.0 + ") mm");
+                /*    Debug.Print("  X and Y positions = (" + pos[0] * 1000.0 + ", " + pos[1] * 1000.0 + ") mm");
                     Debug.Print("  X and Y bounding box minimums = (" + outline[0] * 1000.0 + ", " + outline[1] * 1000.0 + ") mm");
                     Debug.Print("  X and Y bounding box maximums = (" + outline[2] * 1000.0 + ", " + outline[3] * 1000.0 + ") mm");
-                    Debug.Print("  bounding box size = (" + (outline[2] - outline[0]) * 1000.0 + ", " + (outline[3] - outline[1]) * 1000.0 + ") mm");
+                    Debug.Print("  bounding box size = (" + (outline[2] - outline[0]) * 1000.0 + ", " + (outline[3] - outline[1]) * 1000.0 + ") mm");*/
 
                     try
                     {
@@ -258,7 +258,7 @@ namespace CenterOfMass_CSharp.csproj
                             swModel.ClearSelection2(true);
                         }
                     }
-
+                    #endregion
 
                     //视图breakalignment 和 position 功能
                     swModel.ClearSelection2(true);
@@ -280,24 +280,58 @@ namespace CenterOfMass_CSharp.csproj
                     swView.Position = vPos;
 
                     // After setting the position, get the view's outline and center it vertically
-                    double[] finalOutline = (double[])swView.GetOutline();
-                    double viewHeight = finalOutline[3] - finalOutline[1];
-                    // Adjust Y position to center the view based on its height
-                    vPos[1] += viewHeight / 2;
-                    swView.Position = vPos;
+                    //double[] finalOutline = (double[])swView.GetOutline();
+                    //double viewHeight = finalOutline[3] - finalOutline[1];
+                    //// Adjust Y position to center the view based on its height
+                    //vPos[1] += viewHeight / 2;
+                    //swView.Position = vPos;
+
+                    #region 新增逻辑,用于纠正视图的位置
+
+                    // Get the annotations in the view
+                    var viewAnnotations = (object[])swView.GetAnnotations();
+                    if (viewAnnotations != null && viewAnnotations.Length > 0)
+                    {
+                        for (int i = 0; i < viewAnnotations.Length; i++)
+                        {
+                            swAnnotation = (Annotation)viewAnnotations[i];
+                            if (swAnnotation.GetType() == (int)swAnnotationType_e.swNote)
+                            {
+                                double[] annotationPos = (double[])swAnnotation.GetPosition();
+                                if (annotationPos != null && annotationPos.Length > 0)
+                                {
+                                    double ax = annotationPos[0];
+                                    double ay = annotationPos[1];
+                                    double[] viewPos = (double[])swView.Position;
+                                    double viewX = viewPos[0];
+                                    double viewY = viewPos[1];
+                                    double offsetX = ax - viewX;
+                                    double offsetY = ay - viewY;
+                                    // Check if offsets are greater than 0.01
+                                    if (Math.Abs(offsetX) >= 0.01 || Math.Abs(offsetY) >= 0.01)
+                                    {
+                                        double[] newPosition = { viewX - offsetX, viewY - offsetY, swView.ScaleDecimal };
+                                        swView.SetXform(newPosition);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    #endregion
 
                     // Optionally, force update
-                    swModel.EditRebuild3();
+                    //swModel.EditRebuild3();
                     Console.WriteLine($"第{viewCount}个视图的坐标:x={vPos[0]};y={vPos[1]}");
 
 
                     //试试outline在view 重置 body 以后是否发生了变化
                     var outline2 = (double[])swView.GetOutline();
                     var pos2 = (double[])swView.Position;
-                    Debug.Print("  X and Y positions = (" + pos2[0] * 1000.0 + ", " + pos2[1] * 1000.0 + ") mm");
+                   /* Debug.Print("  X and Y positions = (" + pos2[0] * 1000.0 + ", " + pos2[1] * 1000.0 + ") mm");
                     Debug.Print("  X and Y bounding box minimums = (" + outline2[0] * 1000.0 + ", " + outline2[1] * 1000.0 + ") mm");
                     Debug.Print("  X and Y bounding box maximums = (" + outline2[2] * 1000.0 + ", " + outline2[3] * 1000.0 + ") mm");
-                    Debug.Print("  bounding box size = (" + (outline2[2] - outline2[0]) * 1000.0 + ", " + (outline2[3] - outline2[1]) * 1000.0 + ") mm");
+                    Debug.Print("  bounding box size = (" + (outline2[2] - outline2[0]) * 1000.0 + ", " + (outline2[3] - outline2[1]) * 1000.0 + ") mm");*/
 
                     //把 editrebuild 注释掉 非常慢
                     //swModel.EditRebuild3();
@@ -336,7 +370,6 @@ namespace CenterOfMass_CSharp.csproj
 
                     //注释掉, 比较费时
                     //AlignViewWithTheLongestEdge(swModel, swView.Name);
-                    #endregion
 
                     drawingViewModel.SheetName = SwSheetName;
                     drawingViewModel.ViewName = SwViewName;
@@ -382,7 +415,7 @@ namespace CenterOfMass_CSharp.csproj
             int eCount = 0;
             eCount = swView.GetVisibleEntityCount2(swComponent, (int)swViewEntityType_e.swViewEntityType_Edge);
             vEdges = (object[])swView.GetVisibleEntities2(swComponent, (int)swViewEntityType_e.swViewEntityType_Edge);
-            Debug.Print("Number of edges found: " + eCount);
+            //Debug.Print("Number of edges found: " + eCount);
 
             Dictionary<int, double> e = new Dictionary<int, double>();
 
@@ -418,7 +451,7 @@ namespace CenterOfMass_CSharp.csproj
                 swModel.ClearSelection2(true);
             }
 
-            Console.WriteLine(e.Count);
+            //Console.WriteLine(e.Count);
             var maxKey = e.OrderByDescending(x => x.Value).First().Key;
             swEntity = (Entity)vEdges[maxKey];
             swEntity.Select4(true, null);
