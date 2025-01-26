@@ -82,35 +82,35 @@ namespace Dimensioning.csproj
                              Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 50.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(50.0 / 100.0, 2) ||
                              Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 60.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(60.0 / 100.0, 2) && polyLineCount >= 16)
                     {
-                        CreateBrokenOutView(swView, swDrawDoc);
                         int maxAttempts = 20;
-                        int attempts = 0;
-
-                        while (attempts < maxAttempts)
+                        Curve arcCurve = FindFirstArcCurve(vEdges);
+                        if (arcCurve != null)
                         {
-                            CreateBrokenOutView(swView, swDrawDoc);
-                            polyLineCount = swView.GetPolyLineCount5(1, out nCountShaded);
-                            if (polyLineCount == 16 ||
-                                polyLineCount == 17 && vEdges.Count(e => e is Edge && ((Edge)e).GetCurveParams3().CurveType == 3002) == 8)
+                            for (int attempts = 1; attempts <= maxAttempts; attempts++)
+                            {
+                                CreateBrokenOutView3(swView, swDrawDoc, arcCurve, attempts);
+                                polyLineCount = swView.GetPolyLineCount5(1, out nCountShaded);
+                                if (polyLineCount == 16 ||
+                                    polyLineCount == 17 && vEdges.Count(e => e is Edge && ((Edge)e).GetCurveParams3().CurveType == 3002) == 8)
+                                {
+                                    object[] updatedEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
+                                    DimensioningTubeSection(updatedEdges);
+                                    RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
+                                    RelocateDimension(swView);
+                                    break;
+                                }
+                            }
+
+                            // Add additional logic to execute after maxAttempts
+                            if (polyLineCount != 16 &&
+                                !(polyLineCount == 17 && vEdges.Count(e => e is Edge && ((Edge)e).GetCurveParams3().CurveType == 3002) == 8))
                             {
                                 object[] updatedEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
                                 DimensioningTubeSection(updatedEdges);
                                 RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
                                 RelocateDimension(swView);
-                                break;
                             }
-                            attempts++;
                         }
-
-                        // Add additional logic to execute after maxAttempts
-                        if (attempts >= maxAttempts)
-                        {
-                            object[] updatedEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
-                            DimensioningTubeSection(updatedEdges);
-                            RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
-                            RelocateDimension(swView);
-                        }
-
                     }
                     else if (vEdges.Any(edge => edge is Edge && ((Edge)edge).GetCurveParams3().CurveType == 3002))
                     {
@@ -624,6 +624,117 @@ namespace Dimensioning.csproj
             }
             swModel.ClearSelection2(true);
         }
+        private void CreateBrokenOutView2(View swView, DrawingDoc swDrawDoc, int attempts)
+        {
+            object vEdgesOut;
+            object[] vEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
+
+            double[] viewEndData = null;
+
+            foreach (object edgeObj in vEdges)
+            {
+                if (edgeObj is Edge edge)
+                {
+                    Curve curve = (Curve)edge.GetCurve();
+                    CurveParamData curveData = edge.GetCurveParams3();
+
+                    if (curveData.CurveType == 3002) // Circle
+                    {
+                        double[] circleParams = curve.CircleParams as double[];
+                        if (circleParams != null)
+                        {
+                            // Get circle center point
+                            double[] centerPoint = new double[] { circleParams[0], circleParams[1], circleParams[2] };
+
+                            // Create MathPoint for center point
+                            MathUtility swMathUtil = (MathUtility)swApp.GetMathUtility();
+                            MathPoint swModelCenterPt = (MathPoint)swMathUtil.CreatePoint(centerPoint);
+
+                            // Transform center point to view space
+                            MathTransform swViewXform = (MathTransform)swView.ModelToViewTransform;
+                            MathPoint swViewCenterPt = (MathPoint)swModelCenterPt.MultiplyTransform(swViewXform);
+
+                            // Get transformed coordinates for center point 
+                            viewEndData = (double[])swViewCenterPt.ArrayData;
+
+                            Debug.Print($"Circle center point in view space: ({viewEndData[0]}, {viewEndData[1]}, {viewEndData[2]})");
+                            Debug.Print($"Circle radius: {circleParams[6]}");
+
+                            break; // Exit after finding first circle
+                        }
+                    }
+                }
+            }
+
+            try
+            {
+                // Check if there is an active view and deactivate it
+                View activeView = (View)swDrawDoc.ActiveDrawingView;
+                swDrawDoc.ActivateView(swView.Name);
+
+                if (activeView != null && activeView.Name != swView.Name)
+                {
+                    Debug.Print("Active View Name: " + activeView.GetName2());
+                    Debug.Print("swView Name: " + swView.GetName2());
+                    swDrawDoc.ActivateView(swView.Name);
+                }
+                else
+                {
+                    Debug.Print("No active view.");
+                }
+
+                SketchManager swSketchMgr = swModel.SketchManager;
+                SketchSegment swSketchSeg;
+
+                // Get sheet properties for scaling 
+                Sheet swSheet = swView.Sheet;
+                double[] sheetProps = (double[])swSheet.GetProperties();
+                double sheetScale = sheetProps[3];
+
+                // Get view center coordinates
+                double[] viewOutline = (double[])swView.GetOutline();
+                double viewWidth = Math.Abs(viewOutline[2] - viewOutline[0]);
+                double viewHeight = Math.Abs(viewOutline[3] - viewOutline[1]);
+
+                //swSketchMgr.InsertSketch(true);
+                swSketchSeg = swSketchMgr.CreateCircleByRadius(0, 0, 0, Math.Round((viewWidth + viewHeight), 2) * 3);
+                //swSketchMgr.InsertSketch(false);
+
+                // Select the line
+                if (swSketchSeg != null)
+                {
+                    swSketchSeg.Select4(false, null);
+                }
+
+                double[] swViewXform2 = (double[])swView.GetViewXform();
+
+                if (viewEndData != null && swViewXform2 != null && swViewXform2.Length > 12)
+                {
+                    if (viewEndData != null && viewEndData.Length > 2 && swViewXform2 != null && swViewXform2.Length > 12 && swViewXform2[12] != 0)
+                    {
+                        double cutDepth = viewEndData[2] / swViewXform2[12] * (0.5 + attempts * 0.5);
+
+                        Debug.Print($"Original Cut Depth: {viewEndData[2] / swViewXform2[12]} , and the times is : {(0.5 + attempts * 0.5)}");
+                        Debug.Print($"Cut Depth: {cutDepth}");
+                        bool status = swDrawDoc.CreateBreakOutSection(cutDepth);
+                    }
+                    else
+                    {
+                        Debug.Print("Invalid data for calculating cut depth.");
+                    }
+                }
+                else
+                {
+                    Debug.Print("viewEndData or swViewXform2 is not properly initialized.");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Debug.Print($"Error creating broken-out view: {ex.Message}");
+            }
+            swModel.ClearSelection2(true);
+        }
         private void RelocateDimension(View view)
         {
             DisplayDimension currentDim = view.GetFirstDisplayDimension5();
@@ -689,7 +800,7 @@ namespace Dimensioning.csproj
 
 
         }
-        private void AddOrdinateDimension(View swView)
+        /*private void AddOrdinateDimension(View swView)
         {
             try
             {
@@ -736,7 +847,7 @@ namespace Dimensioning.csproj
                             );
 
                             // Set arrow size if needed
-                            if (swModel.Extension.SelectByID2("D1@" + swView.GetName2(), "DIMENSION", center[0], center[1], 0, false, 0, null, 0))
+                            if (swModel.Extension.SelectByID2("D1@" + swView.GetName2(), "DIMENSION", center[0], center[1], 0))
                             {
                                 swDisplayDimension = (DisplayDimension)swSelMgr.GetSelectedObject6(1, -1);
                                 swDisplayDimension.SetOrdinateDimensionArrowSize(false, 0.003);
@@ -754,6 +865,7 @@ namespace Dimensioning.csproj
                 swModel.ClearSelection2(true);
             }
         }
+        */
         private void DimensioningHoles(View swView)
         {
             object vEdgesOut;
@@ -1098,6 +1210,117 @@ namespace Dimensioning.csproj
                 }
                 swModel.Extension.AlignDimensions((int)swAlignDimensionType_e.swAlignDimensionType_AutoArrange, 0.06);
             }
+        }
+        private Curve FindFirstArcCurve(object[] vEdges)
+        {
+            foreach (object edgeObj in vEdges)
+            {
+                if (edgeObj is Edge edge)
+                {
+                    Curve curve = (Curve)edge.GetCurve();
+                    CurveParamData curveData = edge.GetCurveParams3();
+
+                    if (curveData.CurveType == 3002) // Circle
+                    {
+                        return curve;
+                    }
+                }
+            }
+            return null;
+        }
+        private void CreateBrokenOutView3(View swView, DrawingDoc swDrawDoc, Curve arcCurve, int attempts)
+        {
+            double[] circleParams = arcCurve.CircleParams as double[];
+            if (circleParams == null)
+            {
+                Debug.Print("Invalid circle parameters.");
+                return;
+            }
+
+            double[] centerPoint = new double[] { circleParams[0], circleParams[1], circleParams[2] };
+
+            // Create MathPoint for center point
+            MathUtility swMathUtil = (MathUtility)swApp.GetMathUtility();
+            MathPoint swModelCenterPt = (MathPoint)swMathUtil.CreatePoint(centerPoint);
+
+            // Transform center point to view space
+            MathTransform swViewXform = (MathTransform)swView.ModelToViewTransform;
+            MathPoint swViewCenterPt = (MathPoint)swModelCenterPt.MultiplyTransform(swViewXform);
+
+            // Get transformed coordinates for center point 
+            double[] viewEndData = (double[])swViewCenterPt.ArrayData;
+
+            Debug.Print($"Circle center point in view space: ({viewEndData[0]}, {viewEndData[1]}, {viewEndData[2]})");
+            Debug.Print($"Circle radius: {circleParams[6]}");
+
+            try
+            {
+                // Check if there is an active view and deactivate it
+                View activeView = (View)swDrawDoc.ActiveDrawingView;
+                swDrawDoc.ActivateView(swView.Name);
+
+                if (activeView != null && activeView.Name != swView.Name)
+                {
+                    Debug.Print("Active View Name: " + activeView.GetName2());
+                    Debug.Print("swView Name: " + swView.GetName2());
+                    swDrawDoc.ActivateView(swView.Name);
+                }
+                else
+                {
+                    Debug.Print("No active view.");
+                }
+
+                SketchManager swSketchMgr = swModel.SketchManager;
+                SketchSegment swSketchSeg;
+
+                // Get sheet properties for scaling 
+                Sheet swSheet = swView.Sheet;
+                double[] sheetProps = (double[])swSheet.GetProperties();
+                double sheetScale = sheetProps[3];
+
+                // Get view center coordinates
+                double[] viewOutline = (double[])swView.GetOutline();
+                double viewWidth = Math.Abs(viewOutline[2] - viewOutline[0]);
+                double viewHeight = Math.Abs(viewOutline[3] - viewOutline[1]);
+
+                //swSketchMgr.InsertSketch(true);
+                swSketchSeg = swSketchMgr.CreateCircleByRadius(0, 0, 0, Math.Round((viewWidth + viewHeight), 2) * 3);
+                //swSketchMgr.InsertSketch(false);
+
+                // Select the line
+                if (swSketchSeg != null)
+                {
+                    swSketchSeg.Select4(false, null);
+                }
+
+                double[] swViewXform2 = (double[])swView.GetViewXform();
+
+                if (viewEndData != null && swViewXform2 != null && swViewXform2.Length > 12)
+                {
+                    if (viewEndData != null && viewEndData.Length > 2 && swViewXform2 != null && swViewXform2.Length > 12 && swViewXform2[12] != 0)
+                    {
+                        double cutDepth = viewEndData[2] / swViewXform2[12] * (0.2 + attempts * 0.2);
+
+                        Debug.Print($"Original Cut Depth: {viewEndData[2] / swViewXform2[12]} , and the times is : {(0.2 + attempts * 0.2)}");
+                        Debug.Print($"Cut Depth: {cutDepth}");
+                        bool status = swDrawDoc.CreateBreakOutSection(cutDepth);
+                    }
+                    else
+                    {
+                        Debug.Print("Invalid data for calculating cut depth.");
+                    }
+                }
+                else
+                {
+                    Debug.Print("viewEndData or swViewXform2 is not properly initialized.");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Debug.Print($"Error creating broken-out view: {ex.Message}");
+            }
+            swModel.ClearSelection2(true);
         }
 
         public SldWorks swApp;
