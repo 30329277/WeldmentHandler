@@ -45,7 +45,11 @@ namespace WeldCutList
         async private void Button_Click_2(object sender, RoutedEventArgs e)
         {
             this.progressBar1.IsIndeterminate = true;
+            cancellationTokenSource = new CancellationTokenSource();
+            cancellationToken = cancellationTokenSource.Token;
 
+            try
+            {
             await Task.Run(() =>
             {
                 var macro = new Macro1CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
@@ -80,7 +84,12 @@ namespace WeldCutList
                     dataGrid1.ItemsSource = query.ToList();
                     textBox1.Text = "View 的数量是: " + query.Count().ToString();
                 });
-            });
+                }, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                MessageBox.Show("Operation was canceled.");
+            }
 
             this.progressBar1.IsIndeterminate = false;
             this.progressBar1.Value = 100;
@@ -145,7 +154,11 @@ namespace WeldCutList
         private async void Button_Click_4(object sender, RoutedEventArgs e)
         {
             this.progressBar1.IsIndeterminate = true;
+            cancellationTokenSource = new CancellationTokenSource();
+            cancellationToken = cancellationTokenSource.Token;
 
+            try
+            {
             await Task.Run(() =>
             {
                 string excelFilePath = "cutlist.xlsx";
@@ -174,7 +187,12 @@ namespace WeldCutList
                 var sheetQuantity = Math.Ceiling(Convert.ToDouble(query.Count()) / 30);
                 Console.WriteLine(query.Count() + "   " + Convert.ToDouble(query.Count()) / 30 + "  " + sheetQuantity);
                 macro.Main(query.Count() / 30);
-            });
+                }, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                MessageBox.Show("Operation was canceled.");
+            }
 
             this.progressBar1.IsIndeterminate = false;
             this.progressBar1.Value = 100;
@@ -189,13 +207,22 @@ namespace WeldCutList
         {
             //this.btn2.IsEnabled = false;
             this.progressBar1.IsIndeterminate = true;
+            cancellationTokenSource = new CancellationTokenSource();
+            cancellationToken = cancellationTokenSource.Token;
 
+            try
+            {
             await Task.Run(() =>
             {
                 var macro = new CenterOfMass_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
                 //最核心的方法:获取新的集合,气球, 摆正等功能
                 macro.Main(drawingViewModel);
-            });
+                }, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                MessageBox.Show("Operation was canceled.");
+            }
 
             this.progressBar1.IsIndeterminate = false;
             this.progressBar1.Value = 100;
@@ -205,16 +232,32 @@ namespace WeldCutList
         {
             //this.btn2.IsEnabled = false;
             this.progressBar1.IsIndeterminate = true;
+            cancellationTokenSource = new CancellationTokenSource();
+            cancellationToken = cancellationTokenSource.Token;
 
+            try
+            {
             await Task.Run(() =>
             {
                 var macro = new Dimensioning.csproj.SolidWorksMacro() { swApp = new SldWorks() };
                 macro.Main();
-            });
+                }, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                MessageBox.Show("Operation was canceled.");
+            }
 
             this.progressBar1.IsIndeterminate = false;
             this.progressBar1.Value = 100;
         }
 
+        private void Button_Click_Cancel(object sender, RoutedEventArgs e)
+        {
+            if (cancellationTokenSource != null)
+            {
+                cancellationTokenSource.Cancel();
+            }
+        }
     }
 }
