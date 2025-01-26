@@ -204,6 +204,54 @@ namespace CenterOfMass_CSharp.csproj
                     //增加气球功能
                     swModel.Extension.SelectByID2(((View)vv[viewCount]).GetName2(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
                     swDrawDoc.AutoBalloon5(autoballoonParams);
+
+                    // 检查视图是否已经有气球
+                    bool hasBalloons = false;
+                    var annotations = (object[])swView.GetAnnotations();
+                    if (annotations != null)
+                    {
+                        foreach (var annotation in annotations)
+                        {
+                            var swAnnotation = (Annotation)annotation;
+                            if (swAnnotation.GetType() == (int)swAnnotationType_e.swNote) // Changed from swBalloonNote to swNote
+
+                            {
+                                hasBalloons = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // 如果没有气球，则添加气球
+                    if (!hasBalloons)
+                    {
+                        // Configure balloon options
+                        BalloonOptions bomBalloonParams = swModel.Extension.CreateBalloonOptions();
+                        bomBalloonParams.Style = (int)swBalloonStyle_e.swBS_Circular;
+                        bomBalloonParams.Size = (int)swBalloonFit_e.swBF_2Chars;
+                        bomBalloonParams.UpperTextContent = (int)swBalloonTextContent_e.swBalloonTextItemNumber;
+                        bomBalloonParams.ShowQuantity = true;
+                        bomBalloonParams.QuantityPlacement = (int)swBalloonQuantityPlacement_e.swBalloonQuantityPlacement_Right;
+                        bomBalloonParams.QuantityDenotationText = "PLACES";
+                        bomBalloonParams.ItemNumberStart = 1;
+                        bomBalloonParams.ItemNumberIncrement = 1;
+                        bomBalloonParams.ItemOrder = (int)swBalloonItemNumbersOrder_e.swBalloonItemNumbers_DoNotChangeItemNumbers;
+
+                        // Select any edge in the view
+                        var edges = (object[])swView.GetVisibleEntities2(swComponent, (int)swViewEntityType_e.swViewEntityType_Edge);
+                        if (edges != null && edges.Length > 0)
+                        {
+                            var swEdge = (Entity)edges[0];
+                            swEdge.Select4(true, null);
+
+                            // Insert balloon with configured options
+                            var swNote = (Note)swModel.Extension.InsertBOMBalloon2(bomBalloonParams);
+
+                            swModel.ClearSelection2(true);
+                        }
+                    }
+
+
                     //视图breakalignment 和 position 功能
                     swModel.ClearSelection2(true);
 
