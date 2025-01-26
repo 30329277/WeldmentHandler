@@ -158,6 +158,14 @@ namespace CenterOfMass_CSharp.csproj
             Console.WriteLine($"resultquery的数量是：{resultquery.Count()}");
             Console.WriteLine($"arrayFromResultQuery的数量是:{arrayFromResultQuery.Count()}");
 
+            // Constants for A0 sheet dimensions and view spacing
+            const double sheetWidth = 1.189; // A0 width in meters
+            const double sheetHeight = 0.841; // A0 height in meters
+            const int viewsPerRow = 5;
+            const int maxRows = 6;
+            const double viewSpacingX = sheetWidth / (viewsPerRow + 1);
+            const double viewSpacingY = sheetHeight / (maxRows + 1);
+
             for (sheetCount = ss.GetLowerBound(0); sheetCount <= ss.GetUpperBound(0); sheetCount++)
             {
                 vv = (object[])ss[sheetCount];
@@ -265,12 +273,23 @@ namespace CenterOfMass_CSharp.csproj
                     //注释掉 forcerebuild 非常慢
                     //swModel.ForceRebuild3(true);
 
-                    //193 136
-                    double[] vPos = { 0, 0 };
-                    vPos[0] = ((viewCount - 1) % 5) * 0.193 + 0.096;
-                    vPos[1] = 0.82 - ((viewCount - 1) / 5) * 0.136 - 0.068;
+                    // Calculate the position for the view
+                    int row = (viewCount - 1) / viewsPerRow;
+                    int col = (viewCount - 1) % viewsPerRow;
+                    double[] vPos = { (col + 1) * viewSpacingX, sheetHeight - (row + 1) * viewSpacingY };
                     swView.Position = vPos;
+
+                    // After setting the position, get the view's outline and center it vertically
+                    double[] finalOutline = (double[])swView.GetOutline();
+                    double viewHeight = finalOutline[3] - finalOutline[1];
+                    // Adjust Y position to center the view based on its height
+                    vPos[1] += viewHeight / 2;
+                    swView.Position = vPos;
+
+                    // Optionally, force update
+                    swModel.EditRebuild3();
                     Console.WriteLine($"第{viewCount}个视图的坐标:x={vPos[0]};y={vPos[1]}");
+
 
                     //试试outline在view 重置 body 以后是否发生了变化
                     var outline2 = (double[])swView.GetOutline();
