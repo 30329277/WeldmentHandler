@@ -207,7 +207,7 @@ namespace CenterOfMass_CSharp.csproj
                     arrBodiesIn[0] = new DispatchWrapper(Bodies[0]);
                     swView.Bodies = (arrBodiesIn);
 
-                    #region 添加气球 并重置位置
+                    #region 添加气球 如果没有气球手工添加InsertBOMBalloon2
 
                     //增加气球功能
                     swModel.Extension.SelectByID2(((View)vv[viewCount]).GetName2(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
