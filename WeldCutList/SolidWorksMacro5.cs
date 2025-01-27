@@ -279,13 +279,6 @@ namespace CenterOfMass_CSharp.csproj
                     double[] vPos = { (col + 1) * viewSpacingX, sheetHeight - (row + 1) * viewSpacingY };
                     swView.Position = vPos;
 
-                    // After setting the position, get the view's outline and center it vertically
-                    //double[] finalOutline = (double[])swView.GetOutline();
-                    //double viewHeight = finalOutline[3] - finalOutline[1];
-                    //// Adjust Y position to center the view based on its height
-                    //vPos[1] += viewHeight / 2;
-                    //swView.Position = vPos;
-
                     #region 新增逻辑,用于纠正视图的位置
 
                     // Get the annotations in the view
@@ -320,10 +313,40 @@ namespace CenterOfMass_CSharp.csproj
 
                     #endregion
 
+                    #region 尝试进行createUnfoldViewat3 , 不好用
+                    /*
+                    double[] viewOutline = (double[])swView.GetOutline();
+                    double viewWidth = Math.Abs(viewOutline[2] - viewOutline[0]);
+                    double viewHeight = Math.Abs(viewOutline[3] - viewOutline[1]);
+                    double[] viewPosition = (double[])swView.Position;
+
+                    if (Math.Round(viewWidth / viewHeight, 2) == 1 || Math.Round(viewWidth / viewHeight, 2) == 0.95 ||
+                             Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 50.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(50.0 / 100.0, 2) ||
+                             Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 60.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(60.0 / 100.0, 2))
+                    {
+                        // Line 324: Add logic to create a view on the left side
+                        double leftOffsetX = viewPosition[0] - (sheetWidth / 10);
+                        double leftOffsetY = viewPosition[1];
+                        // Select the current swView before creating the unfolded view
+                        swModel.Extension.SelectByID2(swView.GetName2(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+                        swDrawDoc.CreateUnfoldedViewAt3(leftOffsetX, leftOffsetY, 0, true);
+
+                    }
+                    else {
+                        // Line 327: Add logic to create a view on the right side
+                        double rightOffsetX = viewPosition[0] + (sheetWidth / 10);
+                        double rightOffsetY = viewPosition[1];
+                        // Select the current swView before creating the unfolded view
+                        swModel.Extension.SelectByID2(swView.GetName2(), "DRAWINGVIEW", 0, 0, 0, false, 0, null, 0);
+                        swDrawDoc.CreateUnfoldedViewAt3(rightOffsetX, rightOffsetY, 0, true);
+                    } 
+                    */
+                    #endregion
+
+
                     // Optionally, force update
                     //swModel.EditRebuild3();
                     Console.WriteLine($"第{viewCount}个视图的坐标:x={vPos[0]};y={vPos[1]}");
-
 
                     //试试outline在view 重置 body 以后是否发生了变化
                     var outline2 = (double[])swView.GetOutline();
@@ -335,38 +358,6 @@ namespace CenterOfMass_CSharp.csproj
 
                     //把 editrebuild 注释掉 非常慢
                     //swModel.EditRebuild3();
-
-                    #region 想反偏置 效果不好
-
-                    //判断一下新的view和旧的view比,向哪个象限发生了offset
-                    //double xBoundingBox = outline2[2] - outline[2];
-                    //double yBoundingBox = outline2[3] - outline[3];
-
-                    //if (xBoundingBox > 0 && yBoundingBox > 0)
-                    //{
-                    //    vPos[0] -= ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
-                    //    vPos[1] -= ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
-                    //}
-                    //else if (xBoundingBox > 0 && yBoundingBox < 0)
-                    //{
-                    //    vPos[0] -= ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
-                    //    vPos[1] += ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
-                    //}
-                    //else if (xBoundingBox < 0 && yBoundingBox > 0)
-                    //{
-                    //    vPos[0] += ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
-                    //    vPos[1] -= ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
-                    //}
-                    //else if (xBoundingBox < 0 && yBoundingBox < 0)
-                    //{
-                    //    vPos[0] += ((outline[2] - outline[0]) - (outline2[2] - outline2[0])) / 2;
-                    //    vPos[1] += ((outline[3] - outline[1]) - (outline2[3] - outline2[1])) / 2;
-                    //}
-
-                    //swView.Position = vPos;
-                    //swModel.EditRebuild3();
-
-                    #endregion
 
                     //注释掉, 比较费时
                     //AlignViewWithTheLongestEdge(swModel, swView.Name);
