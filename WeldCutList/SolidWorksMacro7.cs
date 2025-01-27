@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
+using WeldCutList;
 namespace Dimensioning.csproj
 {
     partial class SolidWorksMacro
@@ -25,6 +26,10 @@ namespace Dimensioning.csproj
 
         public void Main()
         {
+            //尝试用方法 createUnfoldViewAt3() 添加project view, 但是无法对齐
+            //SolidWorksMacro8 macro8 = new SolidWorksMacro8();
+            //macro8.CreateUnfoldedViewsForAllSheetsAndViews();
+
             swModel = (ModelDoc2)swApp.ActiveDoc;
             swDrawDoc = (DrawingDoc)swModel;
             swModelDocExt = (ModelDocExtension)swModel.Extension;
@@ -118,14 +123,14 @@ namespace Dimensioning.csproj
                         DimensioningHoles2(swView);
                         DimensioningTubeSide(vEdges);
                         Remove90And180DegreeDimensions(swView, swDrawDoc);
+                        RelocateDimension(swView);
                     }
-
                     else
                     {
                         DimensioningTubeSide(vEdges);
                         Remove90And180DegreeDimensions(swView, swDrawDoc);
+                        RelocateDimension(swView);
                     }
-
                 }
             }
 

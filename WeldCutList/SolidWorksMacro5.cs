@@ -186,10 +186,10 @@ namespace CenterOfMass_CSharp.csproj
                     //Debug.Print(swSheetName);
                     //Debug.Print(SwViewName);
 
-                    //试试outline在view 重置 body 以后是否发生了变化
+                    //试试outline在view 重置 body 以后,是否发生了变化
                     double[] outline = (double[])swView.GetOutline();
                     double[] pos = (double[])swView.Position;
-                /*    Debug.Print("  X and Y positions = (" + pos[0] * 1000.0 + ", " + pos[1] * 1000.0 + ") mm");
+                        /*    Debug.Print("  X and Y positions = (" + pos[0] * 1000.0 + ", " + pos[1] * 1000.0 + ") mm");
                     Debug.Print("  X and Y bounding box minimums = (" + outline[0] * 1000.0 + ", " + outline[1] * 1000.0 + ") mm");
                     Debug.Print("  X and Y bounding box maximums = (" + outline[2] * 1000.0 + ", " + outline[3] * 1000.0 + ") mm");
                     Debug.Print("  bounding box size = (" + (outline[2] - outline[0]) * 1000.0 + ", " + (outline[3] - outline[1]) * 1000.0 + ") mm");*/
@@ -222,7 +222,6 @@ namespace CenterOfMass_CSharp.csproj
                         {
                             var swAnnotation = (Annotation)annotation;
                             if (swAnnotation.GetType() == (int)swAnnotationType_e.swNote) // Changed from swBalloonNote to swNote
-
                             {
                                 hasBalloons = true;
                                 break;

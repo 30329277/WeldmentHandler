@@ -141,6 +141,7 @@
     <Compile Include="SolidWorksMacro4.cs" />
     <Compile Include="SolidWorksMacro6.cs" />
     <Compile Include="SolidWorksMacro7.cs" />
+    <Compile Include="SolidWorksMacro8.cs" />
     <Compile Include="ViewModel\DrawingViewModel.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
