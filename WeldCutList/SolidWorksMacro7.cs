@@ -88,7 +88,14 @@ namespace Dimensioning.csproj
                              Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 50.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(50.0 / 100.0, 2) ||
                              Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 60.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(60.0 / 100.0, 2) && polyLineCount >= 16)
                     {
-                        int maxAttempts = 20;
+
+
+                        // 这个view是方管的右左视图，执行以下的for循环逻辑
+                        DimensioningTubeSection(vEdges);
+                        RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
+                        RelocateDimension(swView);
+
+                        /*int maxAttempts = 20;
                         Curve arcCurve = FindFirstArcCurve(vEdges);
                         if (arcCurve != null)
                         {
@@ -111,12 +118,12 @@ namespace Dimensioning.csproj
                             if (polyLineCount != 16 &&
                                 !(polyLineCount == 17 && vEdges.Count(e => e is Edge && ((Edge)e).GetCurveParams3().CurveType == 3002) == 8))
                             {
-                                /*object[] updatedEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
+                                *//*object[] updatedEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
                                 DimensioningTubeSection(updatedEdges);
                                 RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
-                                RelocateDimension(swView);*/
+                                RelocateDimension(swView);*//*
                             }
-                        }
+                        }*/
                     }
                     else if (vEdges.Any(edge => edge is Edge && ((Edge)edge).GetCurveParams3().CurveType == 3002))
                     {
