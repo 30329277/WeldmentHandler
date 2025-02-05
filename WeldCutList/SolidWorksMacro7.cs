@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
-using WeldCutList;
 namespace Dimensioning.csproj
 {
     partial class SolidWorksMacro
@@ -91,9 +90,9 @@ namespace Dimensioning.csproj
 
 
                         // 这个view是方管的右左视图，执行以下的for循环逻辑
-                        DimensioningTubeSection(vEdges);
+                        /*DimensioningTubeSection(vEdges);
                         RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
-                        RelocateDimension(swView);
+                        RelocateDimension(swView);*/
 
                         /*int maxAttempts = 20;
                         Curve arcCurve = FindFirstArcCurve(vEdges);
@@ -623,7 +622,7 @@ namespace Dimensioning.csproj
                     {
                         Debug.Print("Invalid data for calculating cut depth.");
                     }
-                
+
                 }
                 else
                 {
@@ -1059,10 +1058,22 @@ namespace Dimensioning.csproj
                     if (curveData.CurveType == 3002)
                     {
                         double[] circleParams = curve.CircleParams as double[];
-                        if (circleParams != null &&
+                        if ((circleParams != null && Math.Abs(circleParams[6])>0.009 &&
                             Math.Round(circleParams[3], 6) == 0 &&
-                            Math.Round(circleParams[4], 6) == 1 &&
+                            Math.Abs(Math.Round(circleParams[4], 6)) == 1 &&
                             Math.Round(circleParams[5], 6) == 0)
+                            ||
+                            (circleParams != null && Math.Abs(circleParams[6]) > 0.009 &&
+                            Math.Round(circleParams[3], 6) == 0 &&
+                            Math.Abs(Math.Round(circleParams[5], 6)) == 1 &&
+                            Math.Round(circleParams[4], 6) == 0)
+                            ||
+                            (circleParams != null && Math.Abs(circleParams[6]) > 0.009 &&
+                            Math.Round(circleParams[4], 6) == 0 &&
+                            Math.Abs(Math.Round(circleParams[3], 6)) == 1 &&
+                            Math.Round(circleParams[5], 6) == 0)
+
+                            )
                         {
                             // double[] circleParams = curve.CircleParams as double[];
                             if (circleParams != null)
