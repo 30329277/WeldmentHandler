@@ -27,8 +27,9 @@ namespace Dimensioning.csproj
         public void Main()
         {
             //尝试用方法 createUnfoldViewAt3() 添加project view, 但是无法对齐
-            //SolidWorksMacro8 macro8 = new SolidWorksMacro8();
-            //macro8.CreateUnfoldedViewsForAllSheetsAndViews();
+
+            /*SolidWorksMacro8 macro8 = new SolidWorksMacro8();
+            macro8.CreateUnfoldedViewsForAllSheetsAndViews();*/
 
             swModel = (ModelDoc2)swApp.ActiveDoc;
             swDrawDoc = (DrawingDoc)swModel;
@@ -110,10 +111,10 @@ namespace Dimensioning.csproj
                             if (polyLineCount != 16 &&
                                 !(polyLineCount == 17 && vEdges.Count(e => e is Edge && ((Edge)e).GetCurveParams3().CurveType == 3002) == 8))
                             {
-                                object[] updatedEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
+                                /*object[] updatedEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
                                 DimensioningTubeSection(updatedEdges);
                                 RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
-                                RelocateDimension(swView);
+                                RelocateDimension(swView);*/
                             }
                         }
                     }
