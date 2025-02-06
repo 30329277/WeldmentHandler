@@ -83,10 +83,11 @@ namespace Dimensioning.csproj
                         RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
                         RelocateDimension(swView);
                     }
-                    else if (Math.Round(viewWidth / viewHeight, 2) == 1 || Math.Round(viewWidth / viewHeight, 2) == 0.95 ||
+                   /* else if (Math.Round(viewWidth / viewHeight, 2) == 1 || Math.Round(viewWidth / viewHeight, 2) == 0.95 ||
                              Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 50.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(50.0 / 100.0, 2) ||
-                             Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 60.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(60.0 / 100.0, 2) && polyLineCount >= 16)
-                    {
+                             Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 60.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(60.0 / 100.0, 2) && polyLineCount >= 16)*/
+                             else if (Math.Round(viewWidth / viewHeight, 2) == 1 && polyLineCount >= 16 || (Math.Round( viewWidth,2) == 38.64 || Math.Round(viewHeight, 2) == 38.64))
+                            {
 
                         int maxAttempts = 20;
                         Curve arcCurve = FindFirstArcCurve(vEdges);
@@ -94,7 +95,7 @@ namespace Dimensioning.csproj
                         {
                             for (int attempts = 1; attempts <= maxAttempts; attempts++)
                             {
-                                CreateBrokenOutView3(swView, swDrawDoc, arcCurve, attempts);
+                                CreateBrokenOutView4(swView, swDrawDoc, arcCurve, attempts);
                                 polyLineCount = swView.GetPolyLineCount5(1, out nCountShaded);
                                 if (polyLineCount == 16 ||
                                     polyLineCount == 17 && vEdges.Count(e => e is Edge && ((Edge)e).GetCurveParams3().CurveType == 3002) == 8)
@@ -111,10 +112,10 @@ namespace Dimensioning.csproj
                             if (polyLineCount != 16 &&
                                 !(polyLineCount == 17 && vEdges.Count(e => e is Edge && ((Edge)e).GetCurveParams3().CurveType == 3002) == 8))
                             {
-                                object[] updatedEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
+                                /*object[] updatedEdges = (object[])swView.GetPolylines7(1, out vEdgesOut);
                                 DimensioningTubeSection(updatedEdges);
                                 RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
-                                RelocateDimension(swView);
+                                RelocateDimension(swView);*/
                             }
                         }
                     }
@@ -1338,6 +1339,110 @@ namespace Dimensioning.csproj
             {
                 Debug.Print($"Error creating broken-out view: {ex.Message}");
             }
+            swModel.ClearSelection2(true);
+        }
+        private void CreateBrokenOutView4(View swView, DrawingDoc swDrawDoc, Curve arcCurve, int attempts)
+        {
+            double[] circleParams = arcCurve.CircleParams as double[];
+            if (circleParams == null)
+            {
+                Debug.Print("Invalid circle parameters.");
+                return;
+            }
+
+            double[] centerPoint = new double[] { circleParams[0], circleParams[1], circleParams[2] };
+
+            // Create MathPoint for center point
+            MathUtility swMathUtil = (MathUtility)swApp.GetMathUtility();
+            MathPoint swModelCenterPt = (MathPoint)swMathUtil.CreatePoint(centerPoint);
+
+            // Transform center point to view space
+            MathTransform swViewXform = (MathTransform)swView.ModelToViewTransform;
+            MathPoint swViewCenterPt = (MathPoint)swModelCenterPt.MultiplyTransform(swViewXform);
+
+            // Get transformed coordinates for center point 
+            double[] viewEndData = (double[])swViewCenterPt.ArrayData;
+
+            try
+            {
+                // Activate the correct view
+                swDrawDoc.ActivateView(swView.Name);
+
+                SketchManager swSketchMgr = swModel.SketchManager;
+                SketchSegment swSketchSeg;
+
+                // Get sheet properties for scaling 
+                Sheet swSheet = swView.Sheet;
+                double[] sheetProps = (double[])swSheet.GetProperties();
+                double sheetScale = sheetProps[3];
+
+                // Get view center coordinates
+                double[] viewOutline = (double[])swView.GetOutline();
+                double viewWidth = Math.Abs(viewOutline[2] - viewOutline[0]);
+                double viewHeight = Math.Abs(viewOutline[3] - viewOutline[1]);
+
+                // Get annotation position for circle center
+                double circleX = 0;
+                double circleY = 0;
+                
+                // Get the annotations in the view
+                var viewAnnotations = (object[])swView.GetAnnotations();
+                if (viewAnnotations != null && viewAnnotations.Length > 0)
+                {
+                    for (int i = 0; i < viewAnnotations.Length; i++)
+                    {
+                        Annotation swAnnotation = (Annotation)viewAnnotations[i];
+                        if (swAnnotation.GetType() == (int)swAnnotationType_e.swNote)
+                        {
+                            double[] annotationPos = (double[])swAnnotation.GetPosition();
+                            if (annotationPos != null && annotationPos.Length > 0)
+                            {
+                                circleX = annotationPos[0];
+                                circleY = annotationPos[1];
+                                break; // Use the first annotation's position
+                            }
+                        }
+                    }
+                }
+
+                // Check if there is an active view and deactivate it
+                View activeView = (View)swDrawDoc.ActiveDrawingView;
+                if (activeView != null)
+                {
+                    Debug.Print("Deactivating active view: " + activeView.GetName2());
+                    swDrawDoc.ActivateView(""); // Deactivate the current active view
+                    swModel.ClearSelection2(true); // Clear selection
+                }
+               
+
+                // Create circle using annotation position as center
+                swSketchSeg = swSketchMgr.CreateCircleByRadius(circleX/ swView.ScaleDecimal, circleY/ swView.ScaleDecimal, 0, Math.Round((viewWidth + viewHeight), 2) * 8);
+
+                // Select the line
+                if (swSketchSeg != null)
+                {
+                    swSketchSeg.Select4(false, null);
+                }
+
+                double[] swViewXform2 = (double[])swView.GetViewXform();
+
+                if (viewEndData != null && viewEndData.Length > 2 && swViewXform2 != null && 
+                    swViewXform2.Length > 12 && swViewXform2[12] != 0)
+                {
+                    double cutDepth = viewEndData[2] / swViewXform2[12] * (0.2 + attempts * 0.2);
+                    Debug.Print($"Cut Depth: {cutDepth}");
+                    bool status = swDrawDoc.CreateBreakOutSection(cutDepth);
+                }
+                else
+                {
+                    Debug.Print("Invalid data for calculating cut depth.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Print($"Error creating broken-out view: {ex.Message}");
+            }
+            
             swModel.ClearSelection2(true);
         }
 
