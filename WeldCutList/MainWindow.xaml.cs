@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using OfficeOpenXml;
+using System.Windows.Controls.Primitives;
 
 namespace WeldCutList
 {
@@ -50,40 +51,40 @@ namespace WeldCutList
 
             try
             {
-            await Task.Run(() =>
-            {
-                var macro = new Macro1CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
-                macro.Main();
-
-                string excelFilePath = "cutlist.xlsx";
-                List<CutList> cutLists = new List<CutList>();
-
-                if (File.Exists(excelFilePath))
+                await Task.Run(() =>
                 {
-                    using (var package = new ExcelPackage(new FileInfo(excelFilePath)))
-                    {
-                        var worksheet = package.Workbook.Worksheets[1];
-                        int rowCount = worksheet.Dimension.Rows;
+                    var macro = new Macro1CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
+                    macro.Main();
 
-                        for (int row = 2; row <= rowCount; row++)
+                    string excelFilePath = "cutlist.xlsx";
+                    List<CutList> cutLists = new List<CutList>();
+
+                    if (File.Exists(excelFilePath))
+                    {
+                        using (var package = new ExcelPackage(new FileInfo(excelFilePath)))
                         {
-                            cutLists.Add(new CutList
+                            var worksheet = package.Workbook.Worksheets[1];
+                            int rowCount = worksheet.Dimension.Rows;
+
+                            for (int row = 2; row <= rowCount; row++)
                             {
-                                Folder_Name = worksheet.Cells[row, 1].Value?.ToString(),
-                                Body_Name = worksheet.Cells[row, 2].Value?.ToString(),
-                                MaterialProperty = worksheet.Cells[row, 3].Value?.ToString()
-                            });
+                                cutLists.Add(new CutList
+                                {
+                                    Folder_Name = worksheet.Cells[row, 1].Value?.ToString(),
+                                    Body_Name = worksheet.Cells[row, 2].Value?.ToString(),
+                                    MaterialProperty = worksheet.Cells[row, 3].Value?.ToString()
+                                });
+                            }
                         }
                     }
-                }
 
-                var query = cutLists.Select(product => new { product.Folder_Name, product.Body_Name, product.MaterialProperty });
+                    var query = cutLists.Select(product => new { product.Folder_Name, product.Body_Name, product.MaterialProperty });
 
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    dataGrid1.ItemsSource = query.ToList();
-                    textBox1.Text = "View 的数量是: " + query.Count().ToString();
-                });
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        dataGrid1.ItemsSource = query.ToList();
+                        textBox1.Text = "View 的数量是: " + query.Count().ToString();
+                    });
                 }, cancellationToken);
             }
             catch (OperationCanceledException)
@@ -139,11 +140,11 @@ namespace WeldCutList
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private  void Button_Click_1(object sender, RoutedEventArgs e)
+        private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-                var macro = new InsertUnfoldedView_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
-                //用于复制多个视图
-                macro.Main();
+            var macro = new InsertUnfoldedView_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
+            //用于复制多个视图
+            macro.Main();
         }
 
         /// <summary>
@@ -159,34 +160,34 @@ namespace WeldCutList
 
             try
             {
-            await Task.Run(() =>
-            {
-                string excelFilePath = "cutlist.xlsx";
-                List<CutList> cutLists = new List<CutList>();
-
-                if (File.Exists(excelFilePath))
+                await Task.Run(() =>
                 {
-                    using (var package = new ExcelPackage(new FileInfo(excelFilePath)))
-                    {
-                        var worksheet = package.Workbook.Worksheets[1];
-                        int rowCount = worksheet.Dimension.Rows;
+                    string excelFilePath = "cutlist.xlsx";
+                    List<CutList> cutLists = new List<CutList>();
 
-                        for (int row = 2; row <= rowCount; row++)
+                    if (File.Exists(excelFilePath))
+                    {
+                        using (var package = new ExcelPackage(new FileInfo(excelFilePath)))
                         {
-                            cutLists.Add(new CutList
+                            var worksheet = package.Workbook.Worksheets[1];
+                            int rowCount = worksheet.Dimension.Rows;
+
+                            for (int row = 2; row <= rowCount; row++)
                             {
-                                Folder_Name = worksheet.Cells[row, 1].Value?.ToString(),
-                                Body_Name = worksheet.Cells[row, 2].Value?.ToString()
-                            });
+                                cutLists.Add(new CutList
+                                {
+                                    Folder_Name = worksheet.Cells[row, 1].Value?.ToString(),
+                                    Body_Name = worksheet.Cells[row, 2].Value?.ToString()
+                                });
+                            }
                         }
                     }
-                }
 
-                var query = cutLists.Select(product => new { product.Folder_Name, product.Body_Name });
-                var macro = new CopyAndPasteCsharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
-                var sheetQuantity = Math.Ceiling(Convert.ToDouble(query.Count()) / 30);
-                Console.WriteLine(query.Count() + "   " + Convert.ToDouble(query.Count()) / 30 + "  " + sheetQuantity);
-                macro.Main(query.Count() / 30);
+                    var query = cutLists.Select(product => new { product.Folder_Name, product.Body_Name });
+                    var macro = new CopyAndPasteCsharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
+                    var sheetQuantity = Math.Ceiling(Convert.ToDouble(query.Count()) / 30);
+                    Console.WriteLine(query.Count() + "   " + Convert.ToDouble(query.Count()) / 30 + "  " + sheetQuantity);
+                    macro.Main(query.Count() / 30);
                 }, cancellationToken);
             }
             catch (OperationCanceledException)
@@ -202,7 +203,7 @@ namespace WeldCutList
         /// Traverse the drawing view , SolidWorksMacro5 ,气球, 摆正等功能
         /// </summary>
         /// <param="sender"></param>
-        /// <param name="e"></param>
+        /// <param="e"></param>
         async private void Button_Click_5(object sender, RoutedEventArgs e)
         {
             //this.btn2.IsEnabled = false;
@@ -212,11 +213,39 @@ namespace WeldCutList
 
             try
             {
-            await Task.Run(() =>
+                await Task.Run(() =>
+                {
+                    var macro = new CenterOfMass_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
+                    //最核心的方法:获取新的集合,气球, 摆正等功能
+                    macro.Main(drawingViewModel);
+                }, cancellationToken);
+            }
+            catch (OperationCanceledException)
             {
-                var macro = new CenterOfMass_CSharp.csproj.SolidWorksMacro() { swApp = new SldWorks() };
-                //最核心的方法:获取新的集合,气球, 摆正等功能
-                macro.Main(drawingViewModel);
+                MessageBox.Show("Operation was canceled.");
+            }
+
+            this.progressBar1.IsIndeterminate = false;
+            this.progressBar1.Value = 100;
+        }
+
+        /// <summary>
+        /// 理论上一个body至少需要两个view, 一个是正视图, 一个是侧视图,这个宏是用来生成侧视图的, 它的功能在 C:\local\IE4.0\Csharp project\WeldmentCutList v04\WeldCutList\SolidWorksMacro7.cs 也有实现,但是默认是注释掉了
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        async private void Button_Click_7(object sender, RoutedEventArgs e)
+        {
+            this.progressBar1.IsIndeterminate = true;
+            cancellationTokenSource = new CancellationTokenSource();
+            cancellationToken = cancellationTokenSource.Token;
+
+            try
+            {
+                await Task.Run(() =>
+                {
+                    var macro = new Dimensioning02.csproj.SolidWorksMacro() { swApp = new SldWorks() };
+                    macro.Main(drawingViewModel);  // Pass the drawingViewModel
                 }, cancellationToken);
             }
             catch (OperationCanceledException)

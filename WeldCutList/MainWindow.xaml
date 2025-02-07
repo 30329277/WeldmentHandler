@@ -17,17 +17,32 @@
         </Grid.RowDefinitions>
         <StackPanel  VerticalAlignment="Top">
             <ProgressBar Height="20" Minimum="0" Maximum="100" x:Name="progressBar1" />
-            <!--第一个按钮-->
-            <Button Name="btn2" Margin="0 5" Click="Button_Click_2">Get solid bodies from cut-list folders</Button>
-            <!--进度条-->
-            <!--<Button Margin="0 5" Click="Button_Click_3">(暂时不用)Check the DB</Button>-->
-            <Button Margin="0 5" x:Name="btnDuplicate" >Duplicate views and sheets</Button>
-            <!--<Button Margin="0 5" Click="Button_Click_4">(暂时不用)Duplicate the drawing sheets</Button>-->
-            <Button Margin="0 5" Click="Button_Click_5">Traverse the drawing view</Button>
-            <Button Margin="0 5" Click="Button_Click_6">Traverse Dimensioning</Button>
-
-            <!--第二个进度条-->
-            <!--<ProgressBar Height="20" Minimum="0" Maximum="100" x:Name="progressBar2" />-->
+            <Button Name="btn2" Width="400" Margin="0 5" Click="Button_Click_2">Get solid bodies from cut-list folders</Button>
+            <Button Width="400" Margin="0 5" x:Name="btnDuplicate" >Duplicate views and sheets</Button>
+            <Button Width="400" Margin="0 5" Click="Button_Click_5">Traverse the drawing view</Button>
+            <Button Width="400" Margin="0 5" Click="Button_Click_7">(可以单独运行)每个view都再拷贝一份</Button>
+            <ToggleButton Width="100" 
+                          Margin="0,5"
+                          Background="#FF4081"
+                          Foreground="White"
+                          BorderBrush="#C2185B"
+                          BorderThickness="1"
+                          IsChecked="{Binding IsMacro8Enabled, Mode=TwoWay}">
+                <ToggleButton.Style>
+                    <Style TargetType="ToggleButton">
+                        <Style.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Background" Value="#00C853"/>
+                                <Setter Property="BorderBrush" Value="#00B248"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ToggleButton.Style>
+                <TextBlock Text="Auto Copy Views" 
+                           TextWrapping="Wrap" 
+                           TextAlignment="Center"/>
+            </ToggleButton>
+            <Button Width="400" Margin="0 5" Click="Button_Click_6">Traverse Dimensioning</Button>
         </StackPanel>
 
         <DataGrid
@@ -36,7 +51,7 @@
             Margin="10,10,10,0" 
             VerticalAlignment="Top" 
             Width="Auto" 
-            Height="348"
+            Height="300"
             IsReadOnly="True"
             CanUserSortColumns="False"
             FontSize="13" />

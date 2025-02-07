@@ -30,10 +30,12 @@ namespace Dimensioning.csproj
         // Change the Main method signature
         public void Main(DrawingViewModel drawingViewModel)
         {
-            //尝试用方法 createUnfoldViewAt3() 添加project view, 但是无法对齐
-            //用了copy paste 的方法, 然后 runcommand
-            SolidWorksMacro8 macro8 = new SolidWorksMacro8();
-            macro8.CreateAndAlignProjectedViews();
+            // Only execute Macro8 if isMacro8Enabled is true
+            if (drawingViewModel.IsMacro8Enabled)
+            {
+                SolidWorksMacro8 macro8 = new SolidWorksMacro8();
+                macro8.CreateAndAlignProjectedViews(drawingViewModel);
+            }
 
             swModel = (ModelDoc2)swApp.ActiveDoc;
             swDrawDoc = (DrawingDoc)swModel;
