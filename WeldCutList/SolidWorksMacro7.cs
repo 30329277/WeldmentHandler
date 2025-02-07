@@ -6,6 +6,9 @@ using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using WeldCutList;
+using WeldCutList.ViewModel; // Ensure this using directive is present
+
+
 namespace Dimensioning.csproj
 {
     partial class SolidWorksMacro
@@ -24,7 +27,8 @@ namespace Dimensioning.csproj
         Edge swEdge;
         bool status = false;
 
-        public void Main()
+        // Change the Main method signature
+        public void Main(DrawingViewModel drawingViewModel)
         {
             //尝试用方法 createUnfoldViewAt3() 添加project view, 但是无法对齐
             //用了copy paste 的方法, 然后 runcommand
@@ -53,9 +57,18 @@ namespace Dimensioning.csproj
             {
                 string[] sheetNames = (string[])swDrawDoc.GetSheetNames();
                 swDrawDoc.ActivateSheet(sheetNames[sheetCount]); // Activate the current sheet
+                
+                // Update sheet name in view model
+                drawingViewModel.SheetName = sheetNames[sheetCount];
+                
                 vv = (object[])ss[sheetCount];
                 for (viewCount = 1; viewCount <= vv.GetUpperBound(0); viewCount++)
                 {
+                    swView = (View)vv[viewCount];
+                    
+                    // Update view name in view model
+                    drawingViewModel.ViewName = swView.GetName2();
+                    
                     Debug.Print(((View)vv[viewCount]).GetName2());
                     swView = (View)vv[viewCount];
 
@@ -84,6 +97,7 @@ namespace Dimensioning.csproj
                         // 这个view是方管的右左视图，执行以下的for循环逻辑
                         DimensioningTubeSection(vEdges);
                         RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
+                        Remove90And180DegreeDimensions(swView, swDrawDoc);
                         RelocateDimension(swView);
                     }
                     /* else if (Math.Round(viewWidth / viewHeight, 2) == 1 || Math.Round(viewWidth / viewHeight, 2) == 0.95 ||

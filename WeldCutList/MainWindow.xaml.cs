@@ -235,17 +235,16 @@ namespace WeldCutList
         /// <param name="e"></param>
         async private void Button_Click_6(object sender, RoutedEventArgs e)
         {
-            //this.btn2.IsEnabled = false;
             this.progressBar1.IsIndeterminate = true;
             cancellationTokenSource = new CancellationTokenSource();
             cancellationToken = cancellationTokenSource.Token;
 
             try
             {
-            await Task.Run(() =>
-            {
-                var macro = new Dimensioning.csproj.SolidWorksMacro() { swApp = new SldWorks() };
-                macro.Main();
+                await Task.Run(() =>
+                {
+                    var macro = new Dimensioning.csproj.SolidWorksMacro() { swApp = new SldWorks() };
+                    macro.Main(drawingViewModel);  // Pass the drawingViewModel
                 }, cancellationToken);
             }
             catch (OperationCanceledException)
