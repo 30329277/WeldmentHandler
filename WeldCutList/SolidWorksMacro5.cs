@@ -96,6 +96,20 @@ namespace CenterOfMass_CSharp.csproj
 
             AutoBalloonOptions autoballoonParams;
             autoballoonParams = swDrawDoc.CreateAutoBalloonOptions();
+            autoballoonParams.Layout = (int)swBalloonLayoutType_e.swDetailingBalloonLayout_Square;
+  /*          autoballoonParams.ReverseDirection = false;
+            autoballoonParams.IgnoreMultiple = true;
+            autoballoonParams.InsertMagneticLine = true;
+            autoballoonParams.LeaderAttachmentToFaces = true;
+            autoballoonParams.Style = (int)swBalloonStyle_e.swBS_Circular;
+            autoballoonParams.Size = (int)swBalloonFit_e.swBF_5Chars;
+            autoballoonParams.UpperTextContent = (int)swBalloonTextContent_e.swBalloonTextItemNumber;
+            autoballoonParams.Layername = "-None-";
+            autoballoonParams.ItemNumberStart = 1;
+            autoballoonParams.ItemNumberIncrement = 1;
+            autoballoonParams.ItemOrder = (int)swBalloonItemNumbersOrder_e.swBalloonItemNumbers_DoNotChangeItemNumbers;
+            autoballoonParams.EditBalloons = true;
+            autoballoonParams.EditBalloonOption = (int)swEditBalloonOption_e.swEditBalloonOption_Resequence;*/
 
             #endregion
 

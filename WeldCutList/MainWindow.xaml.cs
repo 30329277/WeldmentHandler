@@ -228,6 +228,11 @@ namespace WeldCutList
             this.progressBar1.Value = 100;
         }
 
+        /// <summary>
+        /// 对应着标尺寸按钮 Traverse Dimensioning， 通过 SolidWorksMacro7.cs 实现了 SolidWorksMacro8.cs
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         async private void Button_Click_6(object sender, RoutedEventArgs e)
         {
             //this.btn2.IsEnabled = false;

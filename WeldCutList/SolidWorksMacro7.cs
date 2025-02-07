@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
+using WeldCutList;
 namespace Dimensioning.csproj
 {
     partial class SolidWorksMacro
@@ -27,8 +28,8 @@ namespace Dimensioning.csproj
         {
             //尝试用方法 createUnfoldViewAt3() 添加project view, 但是无法对齐
 
-            /*SolidWorksMacro8 macro8 = new SolidWorksMacro8();
-            macro8.CreateUnfoldedViewsForAllSheetsAndViews();*/
+            SolidWorksMacro8 macro8 = new SolidWorksMacro8();
+            macro8.CreateAndAlignProjectedViews();
 
             swModel = (ModelDoc2)swApp.ActiveDoc;
             swDrawDoc = (DrawingDoc)swModel;
@@ -50,6 +51,8 @@ namespace Dimensioning.csproj
 
             for (sheetCount = ss.GetLowerBound(0); sheetCount <= ss.GetUpperBound(0); sheetCount++)
             {
+                string[] sheetNames = (string[])swDrawDoc.GetSheetNames();
+                swDrawDoc.ActivateSheet(sheetNames[sheetCount]); // Activate the current sheet
                 vv = (object[])ss[sheetCount];
                 for (viewCount = 1; viewCount <= vv.GetUpperBound(0); viewCount++)
                 {
@@ -1392,6 +1395,7 @@ namespace Dimensioning.csproj
                     for (int i = 0; i < viewAnnotations.Length; i++)
                     {
                         Annotation swAnnotation = (Annotation)viewAnnotations[i];
+                        //swAnnotation.SetLeader3((int)swLeaderStyle_e.swAttachLeaderNearest, (int)swLeaderSide_e.swLS_SMART, true, false, false, false);
                         if (swAnnotation.GetType() == (int)swAnnotationType_e.swNote)
                         {
                             double[] annotationPos = (double[])swAnnotation.GetPosition();
@@ -1413,10 +1417,18 @@ namespace Dimensioning.csproj
                     swDrawDoc.ActivateView(""); // Deactivate the current active view
                     swModel.ClearSelection2(true); // Clear selection
                 }
-               
+
+
+                // Check if there is any selected feature in the FeatureManager
+                SelectionMgr swSelMgr = (SelectionMgr)swModel.SelectionManager;
+                if (swSelMgr.GetSelectedObjectCount2(-1) > 0)
+                {
+                    Debug.Print("Clearing selected features in FeatureManager.");
+                    swModel.ClearSelection2(true); // Clear selection
+                }
 
                 // Create circle using annotation position as center
-                swSketchSeg = swSketchMgr.CreateCircleByRadius(circleX/ swView.ScaleDecimal, circleY/ swView.ScaleDecimal, 0, Math.Round((viewWidth + viewHeight), 2) * 8);
+                swSketchSeg = swSketchMgr.CreateCircleByRadius(circleX/ swView.ScaleDecimal, circleY/ swView.ScaleDecimal, 0, Math.Round((viewWidth + viewHeight), 2) * 10);
 
                 // Select the line
                 if (swSketchSeg != null)
