@@ -27,7 +27,7 @@ namespace Dimensioning.csproj
         public void Main()
         {
             //尝试用方法 createUnfoldViewAt3() 添加project view, 但是无法对齐
-
+            //用了copy paste 的方法, 然后 runcommand
             SolidWorksMacro8 macro8 = new SolidWorksMacro8();
             macro8.CreateAndAlignProjectedViews();
 
@@ -86,12 +86,11 @@ namespace Dimensioning.csproj
                         RemoveDuplicate(swView, swDrawDoc, 0, viewCount);
                         RelocateDimension(swView);
                     }
-                   /* else if (Math.Round(viewWidth / viewHeight, 2) == 1 || Math.Round(viewWidth / viewHeight, 2) == 0.95 ||
-                             Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 50.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(50.0 / 100.0, 2) ||
-                             Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 60.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(60.0 / 100.0, 2) && polyLineCount >= 16)*/
-                             else if (Math.Round(viewWidth / viewHeight, 2) == 1 && polyLineCount >= 16 || (Math.Round( viewWidth,2) == 38.64 || Math.Round(viewHeight, 2) == 38.64))
-                            {
-
+                    /* else if (Math.Round(viewWidth / viewHeight, 2) == 1 || Math.Round(viewWidth / viewHeight, 2) == 0.95 ||
+                              Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 50.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(50.0 / 100.0, 2) ||
+                              Math.Round(viewWidth / viewHeight, 2) == Math.Round(100.0 / 60.0, 2) || Math.Round(viewWidth / viewHeight, 2) == Math.Round(60.0 / 100.0, 2) && polyLineCount >= 16)*/
+                    else if (Math.Round(viewWidth / viewHeight, 2) == 1 && polyLineCount >= 16 || (Math.Round(viewWidth, 2) == 38.64 || Math.Round(viewHeight, 2) == 38.64))
+                    {
                         int maxAttempts = 20;
                         Curve arcCurve = FindFirstArcCurve(vEdges);
                         if (arcCurve != null)
@@ -128,13 +127,13 @@ namespace Dimensioning.csproj
                         DimensioningHoles2(swView);
                         DimensioningTubeSide(vEdges);
                         Remove90And180DegreeDimensions(swView, swDrawDoc);
-                        RelocateDimension(swView);
+                        //RelocateDimension(swView);
                     }
                     else
                     {
                         DimensioningTubeSide(vEdges);
                         Remove90And180DegreeDimensions(swView, swDrawDoc);
-                        RelocateDimension(swView);
+                        //RelocateDimension(swView);
                     }
                 }
             }
@@ -1056,11 +1055,11 @@ namespace Dimensioning.csproj
                     if (curveData.CurveType == 3002)
                     {
                         double[] circleParams = curve.CircleParams as double[];
-                        if ((circleParams != null && Math.Abs(circleParams[6])>0.009 &&
+                        if ((circleParams != null && Math.Abs(circleParams[6]) > 0.009 &&
                             Math.Round(circleParams[3], 6) == 0 &&
                             Math.Abs(Math.Round(circleParams[4], 6)) == 1 &&
                             Math.Round(circleParams[5], 6) == 0)
-                            ||
+                           /* ||
                             (circleParams != null && Math.Abs(circleParams[6]) > 0.009 &&
                             Math.Round(circleParams[3], 6) == 0 &&
                             Math.Abs(Math.Round(circleParams[5], 6)) == 1 &&
@@ -1069,8 +1068,7 @@ namespace Dimensioning.csproj
                             (circleParams != null && Math.Abs(circleParams[6]) > 0.009 &&
                             Math.Round(circleParams[4], 6) == 0 &&
                             Math.Abs(Math.Round(circleParams[3], 6)) == 1 &&
-                            Math.Round(circleParams[5], 6) == 0)
-
+                            Math.Round(circleParams[5], 6) == 0)*/
                             )
                         {
                             // double[] circleParams = curve.CircleParams as double[];
@@ -1387,7 +1385,7 @@ namespace Dimensioning.csproj
                 // Get annotation position for circle center
                 double circleX = 0;
                 double circleY = 0;
-                
+
                 // Get the annotations in the view
                 var viewAnnotations = (object[])swView.GetAnnotations();
                 if (viewAnnotations != null && viewAnnotations.Length > 0)
@@ -1428,7 +1426,7 @@ namespace Dimensioning.csproj
                 }
 
                 // Create circle using annotation position as center
-                swSketchSeg = swSketchMgr.CreateCircleByRadius(circleX/ swView.ScaleDecimal, circleY/ swView.ScaleDecimal, 0, Math.Round((viewWidth + viewHeight), 2) * 10);
+                swSketchSeg = swSketchMgr.CreateCircleByRadius(circleX / swView.ScaleDecimal, circleY / swView.ScaleDecimal, 0, Math.Round((viewWidth + viewHeight), 2) * 15);
 
                 // Select the line
                 if (swSketchSeg != null)
@@ -1438,23 +1436,31 @@ namespace Dimensioning.csproj
 
                 double[] swViewXform2 = (double[])swView.GetViewXform();
 
-                if (viewEndData != null && viewEndData.Length > 2 && swViewXform2 != null && 
+                if (viewEndData != null && viewEndData.Length > 2 && swViewXform2 != null &&
                     swViewXform2.Length > 12 && swViewXform2[12] != 0)
                 {
                     double cutDepth = viewEndData[2] / swViewXform2[12] * (0.2 + attempts * 0.2);
                     Debug.Print($"Cut Depth: {cutDepth}");
                     bool status = swDrawDoc.CreateBreakOutSection(cutDepth);
-                }
-                else
-                {
-                    Debug.Print("Invalid data for calculating cut depth.");
+                    // If CreateBreakOutSection fails, delete the sketch
+                    if (!status && swSketchSeg != null)
+                    {
+                        swSketchSeg.Select4(false, null);
+                        swModel.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Absorbed);
+                        swModel.ClearSelection2(true);
+                    }
+                    else
+                    {
+                        Debug.Print("Invalid data for calculating cut depth.");
+                    }
+
                 }
             }
             catch (Exception ex)
             {
                 Debug.Print($"Error creating broken-out view: {ex.Message}");
             }
-            
+
             swModel.ClearSelection2(true);
         }
 

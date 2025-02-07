@@ -199,7 +199,7 @@ namespace WeldCutList
         }
 
         /// <summary>
-        /// Traverse the drawing view
+        /// Traverse the drawing view , SolidWorksMacro5 ,气球, 摆正等功能
         /// </summary>
         /// <param="sender"></param>
         /// <param name="e"></param>
